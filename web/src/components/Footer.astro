@@ -1,0 +1,24 @@
+---
+import type { SiteSettings } from "../lib/pocketbase";
+interface Props { settings: SiteSettings | null }
+const { settings } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer style="background: var(--em-ink); color: var(--em-white); padding: 2.5rem 0; margin-top: 3rem;">
+  <div class="container" style="display:flex; flex-wrap:wrap; gap:2rem; justify-content:space-between;">
+    <div>
+      <strong>{settings?.company_name_th ?? "บริษัท อิงลิช เมเนีย จำกัด"}</strong>
+      <p>เลขทะเบียน {settings?.company_registration_no ?? "0125568032059"}</p>
+      <p>{settings?.address}</p>
+    </div>
+    <div>
+      <p>โทร: {settings?.phone ?? "098 579 5693"}</p>
+      {settings?.facebook_url && <p><a href={settings.facebook_url} target="_blank">Facebook</a></p>}
+      {settings?.line_oa_url && <p><a href={settings.line_oa_url} target="_blank">LINE Official Account</a></p>}
+    </div>
+  </div>
+  <p class="container" style="margin-top:2rem; opacity:0.7; font-size:0.85rem;">
+    &copy; {year} English Mania. All rights reserved.
+  </p>
+</footer>

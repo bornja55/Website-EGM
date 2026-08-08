@@ -1,0 +1,22 @@
+---
+export const prerender = false;
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getServices } from "../lib/pocketbase";
+const services = await getServices().catch(() => []);
+---
+
+<BaseLayout title="คอร์สเรียน">
+  <section class="section">
+    <div class="container">
+      <h1>คอร์สเรียน / บริการ</h1>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+        {services.map((s) => (
+          <div class="card">
+            <h2>{s.title}</h2>
+            <p set:html={s.description} />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

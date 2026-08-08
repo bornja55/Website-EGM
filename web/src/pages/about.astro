@@ -1,0 +1,21 @@
+---
+export const prerender = false;
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout title="เกี่ยวกับเรา">
+  <section class="section container">
+    <h1>เกี่ยวกับเรา</h1>
+    <p>ค่าเรียนเป็นมิตร ไม่คิดราคาศัตรูแน่นอน เพราะเราเข้าใจการเรียนภาษาต้องใช้เวลา
+      เราจึงทำค่าเรียนให้เหมาะสม เพื่อส่งลูกมาได้จนสามารถประสบความสำเร็จในการสื่อสาร
+      เรียนสนุก เข้าใจง่าย ตรงประเด็น เดินทางสะดวกด้วย MRT ตลาดบางใหญ่ ตรงข้ามเซ็นทรัลเวสเกต</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1.5rem; margin-top:2rem;">
+      <div class="card"><strong>7+ ปี</strong><p>ประสบการณ์การสอน Online และ Onsite</p></div>
+      <div class="card"><strong>100+ รางวัล</strong><p>จากการแข่งขันและสอบเข้า</p></div>
+      <div class="card"><strong>2,000+ ครอบครัว</strong><p>เสียงตอบรับที่ชื่นชอบ</p></div>
+      <div class="card"><strong>50+ ทีมงาน</strong><p>ติวเตอร์มืออาชีพ</p></div>
+    </div>
+    <!-- TODO: content hasn't been refreshed in ~1 year, revise copy with the user before launch -->
+  </section>
+</BaseLayout>

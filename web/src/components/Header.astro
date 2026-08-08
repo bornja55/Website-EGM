@@ -1,0 +1,26 @@
+---
+import type { SiteSettings } from "../lib/pocketbase";
+interface Props { settings: SiteSettings | null }
+const { settings } = Astro.props;
+---
+
+<header class="section-yellow" style="padding: 1rem 0;">
+  <div class="container" style="display:flex; align-items:center; justify-content:space-between;">
+    <a href="/" style="display:flex; align-items:center; gap:0.5rem; font-weight:800; font-size:1.25rem;">
+      <img src="/images/logo.png" alt="English Mania by KruYam" height="48" />
+    </a>
+    <nav style="display:flex; gap:1.5rem; font-weight:600;">
+      <a href="/services">คอร์สเรียน</a>
+      <a href="/workshops">เวิร์กช็อป</a>
+      <a href="/blog">บทความ</a>
+      <a href="/about">เกี่ยวกับเรา</a>
+      <a href="/faq">คำถามที่พบบ่อย</a>
+      <a href="/contact">ติดต่อเรา</a>
+    </nav>
+    {settings?.line_oa_url && (
+      <a class="btn btn-line" href={settings.line_oa_url} target="_blank" rel="noopener">
+        จองผ่าน LINE
+      </a>
+    )}
+  </div>
+</header>

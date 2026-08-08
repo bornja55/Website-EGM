@@ -1,0 +1,22 @@
+# Node
+node_modules/
+web/dist/
+web/.astro/
+npm-debug.log*
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+pocketbase/.credentials
+
+# PocketBase runtime data + binary
+pocketbase/pb_data/
+pocketbase/pb_migrations/*.local.js
+pocketbase/pocketbase
+pocketbase/pb.zip
+
+# OS / editor
+.DS_Store
+*.log
+.vscode/

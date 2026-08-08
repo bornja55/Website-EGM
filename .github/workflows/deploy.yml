@@ -1,0 +1,40 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.GCP_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync repo to VM
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude 'node_modules' --exclude '.git' --exclude 'pb_data' \
+            ./ "${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_SSH_HOST }}:/opt/englishmania/"
+
+      - name: Build & restart on VM
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_SSH_HOST }}" '
+            cd /opt/englishmania &&
+            SUPERUSER_EMAIL="${{ secrets.SUPERUSER_EMAIL }}" \
+            SUPERUSER_PASS="${{ secrets.SUPERUSER_PASS }}" \
+            docker compose up -d --build
+          '
+
+# Required repo secrets (Settings -> Secrets and variables -> Actions):
+#   GCP_SSH_HOST, GCP_SSH_USER, GCP_SSH_KEY, SUPERUSER_EMAIL, SUPERUSER_PASS
+# See CLAUDE.md "Deployment" section. None of these are known to Claude —
+# set them up yourself once the e2-micro VM is provisioned.

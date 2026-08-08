@@ -1,0 +1,25 @@
+---
+export const prerender = false;
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const PB_URL = import.meta.env.POCKETBASE_URL || "http://127.0.0.1:8090";
+const res = await fetch(`${PB_URL}/api/collections/blog_posts/records?sort=-published_at&perPage=50`).catch(() => null);
+const posts = res && res.ok ? (await res.json()).items : [];
+---
+
+<BaseLayout title="บทความ">
+  <section class="section">
+    <div class="container">
+      <h1>บทความ</h1>
+      {posts.length === 0 && <p>ยังไม่มีบทความในตอนนี้</p>}
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+        {posts.map((p: any) => (
+          <a class="card" href={`/blog/${p.slug}/`} style="display:block;">
+            <h2>{p.title}</h2>
+            <p>{p.excerpt}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,18 @@
+---
+export const prerender = false;
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getFaq } from "../lib/pocketbase";
+const faqs = await getFaq().catch(() => []);
+---
+
+<BaseLayout title="คำถามที่พบบ่อย">
+  <section class="section container">
+    <h1>คำถามที่พบบ่อย</h1>
+    {faqs.map((f) => (
+      <div class="card" style="margin-bottom:1rem;">
+        <strong>{f.question}</strong>
+        <p set:html={f.answer} />
+      </div>
+    ))}
+  </section>
+</BaseLayout>

@@ -1,0 +1,70 @@
+---
+export const prerender = false;
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getServices, getActivePromotions, getTestimonials } from "../lib/pocketbase";
+
+const [services, promotions, testimonials] = await Promise.all([
+  getServices().catch(() => []),
+  getActivePromotions().catch(() => []),
+  getTestimonials().catch(() => []),
+]);
+---
+
+<BaseLayout title="หน้าแรก">
+  <section class="section-yellow" style="text-align:center; padding: 4rem 0;">
+    <div class="container">
+      <h1 style="font-size:2.5rem; margin-bottom:0.5rem;">English Mania by KruYam</h1>
+      <p style="font-size:1.25rem;">วิธีที่ดีที่สุดในการทำนายอนาคตก็คือ การสร้างมันขึ้นมาเอง</p>
+      <a class="btn" href="/contact">Booking Now</a>
+    </div>
+  </section>
+
+  {promotions.length > 0 && (
+    <section class="section">
+      <div class="container">
+        <h2>โปรโมชั่นตอนนี้</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+          {promotions.map((p) => (
+            <div class="card">
+              <span class="badge">โปรโมชั่น</span>
+              <h3>{p.title}</h3>
+              <p>{p.description}</p>
+              {p.price && <p style="font-size:1.5rem; font-weight:800;">{p.price.toLocaleString()} บาท</p>}
+              {p.line_link && <a class="btn btn-line" href={p.line_link} target="_blank">จองผ่าน LINE</a>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section">
+    <div class="container">
+      <h2>บริการของเรา</h2>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem;">
+        {services.map((s) => (
+          <div class="card">
+            <h3>{s.title}</h3>
+            <p set:html={s.description} />
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  {testimonials.length > 0 && (
+    <section class="section section-yellow">
+      <div class="container">
+        <h2>เสียงจากผู้ปกครองและนักเรียน</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+          {testimonials.map((t) => (
+            <div class="card">
+              <p>&ldquo;{t.quote}&rdquo;</p>
+              <strong>— {t.author_name}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )}
+</BaseLayout>

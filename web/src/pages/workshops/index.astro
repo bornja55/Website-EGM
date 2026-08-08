@@ -1,0 +1,28 @@
+---
+export const prerender = false;
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getActiveWorkshops } from "../../lib/pocketbase";
+const workshops = await getActiveWorkshops().catch(() => []);
+---
+
+<BaseLayout title="เวิร์กช็อป/กิจกรรม">
+  <section class="section">
+    <div class="container">
+      <h1>เวิร์กช็อป & กิจกรรม</h1>
+      <p>ที่นั่งจำกัด จองผ่าน LINE เท่านั้น</p>
+      {workshops.length === 0 && <p>ยังไม่มีเวิร์กช็อปที่เปิดจองตอนนี้ ติดตามได้ทาง Facebook</p>}
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+        {workshops.map((w) => (
+          <div class="card">
+            <h2>{w.title}</h2>
+            <p set:html={w.description} />
+            {w.event_date && <p><strong>วันที่:</strong> {new Date(w.event_date).toLocaleDateString("th-TH")}</p>}
+            {w.price != null && <p><strong>ราคา:</strong> {w.price.toLocaleString()} บาท</p>}
+            {w.seats_total && <p><strong>จำนวนที่นั่ง:</strong> จำกัด {w.seats_total} ที่</p>}
+            {w.line_link && <a class="btn btn-line" href={w.line_link} target="_blank">จองผ่าน LINE</a>}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

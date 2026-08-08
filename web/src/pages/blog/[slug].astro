@@ -1,0 +1,23 @@
+---
+export const prerender = false;
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const { slug } = Astro.params;
+const PB_URL = import.meta.env.POCKETBASE_URL || "http://127.0.0.1:8090";
+const res = await fetch(
+  `${PB_URL}/api/collections/blog_posts/records?filter=${encodeURIComponent(`slug="${slug}"`)}`
+);
+const data = res.ok ? await res.json() : { items: [] };
+const post = data.items[0];
+
+if (!post) {
+  return Astro.redirect("/blog", 302);
+}
+---
+
+<BaseLayout title={post.title}>
+  <article class="section container">
+    <h1>{post.title}</h1>
+    <div set:html={post.content} />
+  </article>
+</BaseLayout>

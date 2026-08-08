@@ -1,0 +1,34 @@
+version: "3.9"
+
+services:
+  pb:
+    build:
+      context: ./pocketbase
+    container_name: egm-pb
+    restart: unless-stopped
+    ports:
+      - "${PB_PORT:-8090}:8090"
+    volumes:
+      - pb_data:/pb/pb_data
+    environment:
+      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL}
+      - SUPERUSER_PASS=${SUPERUSER_PASS}
+
+  web:
+    build:
+      context: ./web
+    container_name: egm-web
+    restart: unless-stopped
+    depends_on:
+      - pb
+    ports:
+      - "${WEB_PORT:-3000}:4321"
+    environment:
+      - POCKETBASE_URL=http://pb:8090
+      - PUBLIC_POCKETBASE_URL=${PUBLIC_POCKETBASE_URL:-https://englishmania.co.th/pb}
+      - GOOGLE_SHEETS_ID=${GOOGLE_SHEETS_ID}
+      - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON}
+      - GMAIL_SENDER=${GMAIL_SENDER}
+
+volumes:
+  pb_data:
