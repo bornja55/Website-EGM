@@ -6,23 +6,112 @@ const workshops = await getActiveWorkshops().catch(() => []);
 ---
 
 <BaseLayout title="เวิร์กช็อป/กิจกรรม">
-  <section class="section">
+  <section class="section hero-text">
     <div class="container">
-      <h1>เวิร์กช็อป & กิจกรรม</h1>
-      <p>ที่นั่งจำกัด จองผ่าน LINE เท่านั้น</p>
-      {workshops.length === 0 && <p>ยังไม่มีเวิร์กช็อปที่เปิดจองตอนนี้ ติดตามได้ทาง Facebook</p>}
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+      <h1 class="hero-heading">เวิร์กช็อป &amp; กิจกรรม</h1>
+      <p class="hero-sub">ที่นั่งจำกัด จองผ่าน LINE เท่านั้น</p>
+    </div>
+  </section>
+
+  <section class="section section-neutral">
+    <div class="container">
+      {workshops.length === 0 && (
+        <p class="empty-state">ยังไม่มีเวิร์กช็อปที่เปิดจองตอนนี้ ติดตามได้ทาง Facebook</p>
+      )}
+      <div class="grid grid-2">
         {workshops.map((w) => (
-          <div class="card">
-            <h2>{w.title}</h2>
-            <p set:html={w.description} />
-            {w.event_date && <p><strong>วันที่:</strong> {new Date(w.event_date).toLocaleDateString("th-TH")}</p>}
-            {w.price != null && <p><strong>ราคา:</strong> {w.price.toLocaleString()} บาท</p>}
-            {w.seats_total && <p><strong>จำนวนที่นั่ง:</strong> จำกัด {w.seats_total} ที่</p>}
-            {w.line_link && <a class="btn btn-line" href={w.line_link} target="_blank">จองผ่าน LINE</a>}
-          </div>
+          <article class="card workshop-card">
+            {w.cover_image && (
+              <div class="workshop-image">
+                <img src={w.cover_image} alt={w.title} loading="lazy" />
+                {w.seats_total && <span class="badge seats-badge">ที่นั่งจำกัด {w.seats_total} ที่</span>}
+              </div>
+            )}
+            <div class="workshop-body">
+              <h2>{w.title}</h2>
+              <p set:html={w.description} />
+              {w.event_date && (
+                <p class="workshop-meta">{new Date(w.event_date).toLocaleDateString("th-TH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
+              )}
+              <div class="workshop-footer">
+                {w.price != null && <span class="workshop-price">{w.price.toLocaleString()} บาท</span>}
+                {w.line_link && (
+                  <a class="btn btn-line" href={w.line_link} target="_blank" rel="noopener">จองผ่าน LINE</a>
+                )}
+              </div>
+            </div>
+          </article>
         ))}
       </div>
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  /* Ported from design/generated_screens/Workshops & Events -
+     Desktop-DESKTOP.html. Dropped the mockup's "My Bookings"/"Profile" bottom
+     nav — no account/booking system in this project (PRD non-goal), the real
+     booking flow is a LINE deep-link, same as everywhere else on the site. */
+  .hero-text {
+    text-align: center;
+    padding-bottom: 1.5rem;
+  }
+  .hero-sub {
+    color: rgba(43, 43, 43, 0.7);
+    margin-top: 0.75rem;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: rgba(43, 43, 43, 0.6);
+  }
+  .grid {
+    display: grid;
+    gap: 2rem;
+  }
+  .grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .workshop-card {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .workshop-image {
+    position: relative;
+    aspect-ratio: 16 / 9;
+  }
+  .workshop-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .seats-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+  .workshop-body {
+    padding: 1.5rem;
+  }
+  .workshop-meta {
+    color: rgba(43, 43, 43, 0.65);
+    font-size: 0.9rem;
+  }
+  .workshop-footer {
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .workshop-price {
+    font-size: 1.25rem;
+    font-weight: 800;
+  }
+</style>

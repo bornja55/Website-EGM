@@ -5,13 +5,20 @@ import { getServices } from "../lib/pocketbase";
 const services = await getServices().catch(() => []);
 ---
 
-<BaseLayout title="คอร์สเรียน">
-  <section class="section">
+<BaseLayout title="คอร์สเรียน / บริการ">
+  <section class="section hero-text">
     <div class="container">
-      <h1>คอร์สเรียน / บริการ</h1>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+      <h1 class="hero-heading">คอร์สเรียน / บริการ</h1>
+      <p class="hero-sub">เลือกรูปแบบการเรียนที่เหมาะสมกับคุณที่สุด พร้อมสิ่งอำนวยความสะดวกครบครัน</p>
+    </div>
+  </section>
+
+  <section class="section section-neutral">
+    <div class="container">
+      <div class="grid grid-2">
         {services.map((s) => (
-          <div class="card">
+          <div class="card service-card">
+            <div class="icon-circle">{s.icon || s.title.charAt(0)}</div>
             <h2>{s.title}</h2>
             <p set:html={s.description} />
           </div>
@@ -20,3 +27,45 @@ const services = await getServices().catch(() => []);
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  /* Ported from design/generated_screens/คอร์สเรียน _ บริการ - English Mania
+     (Desktop)-DESKTOP.html — bento grid of service cards, colors from the 7
+     DESIGN.md tokens (nothing from Stitch's invented Material-You palette). */
+  .hero-text {
+    text-align: center;
+    padding-bottom: 2rem;
+  }
+  .hero-sub {
+    font-size: 1.15rem;
+    color: rgba(43, 43, 43, 0.7);
+    max-width: 40rem;
+    margin: 1.25rem auto 0;
+  }
+  .grid {
+    display: grid;
+    gap: 2rem;
+  }
+  .grid-2 {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+  .service-card {
+    transition: transform 0.2s ease;
+  }
+  .service-card:hover {
+    transform: translateY(-4px);
+  }
+  .icon-circle {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: var(--em-neutral-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--em-red);
+  }
+</style>

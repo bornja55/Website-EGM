@@ -9,6 +9,20 @@ migrate((app) => {
   const editorsAuthRule =
     "@request.auth.id != '' && @request.auth.collectionName = 'editors'";
 
+  // PocketBase v0.23+ does NOT add `created`/`updated` fields implicitly —
+  // every collection below declares them explicitly. Found by static review
+  // (couldn't boot PocketBase in this sandbox to test live — GitHub release
+  // downloads are blocked by the sandbox's network allowlist) after noticing
+  // `getActivePromotions()` in web/src/lib/pocketbase.ts sorts by
+  // `-created`, which would 400 against a collection that never declared
+  // that field. empire-website's own CLAUDE.md documents hitting exactly
+  // this gap for a different collection — same fix applied everywhere here
+  // up front instead of waiting to hit it in each collection one at a time.
+  const timestampFields = [
+    { name: "created", type: "autodate", onCreate: true },
+    { name: "updated", type: "autodate", onCreate: true, onUpdate: true },
+  ];
+
   // --- editors (auth collection) ---------------------------------------
   const editors = new Collection({
     type: "auth",
@@ -20,6 +34,7 @@ migrate((app) => {
     deleteRule: null,
     fields: [
       { name: "name", type: "text", required: true },
+      ...timestampFields,
     ],
   });
   app.save(editors);
@@ -42,6 +57,7 @@ migrate((app) => {
       { name: "company_registration_no", type: "text" },
       { name: "facebook_url", type: "url" },
       { name: "google_maps_embed_url", type: "url" },
+      ...timestampFields,
     ],
   });
   app.save(siteSettings);
@@ -60,6 +76,7 @@ migrate((app) => {
       { name: "description", type: "editor" },
       { name: "icon", type: "text" },
       { name: "sort_order", type: "number" },
+      ...timestampFields,
     ],
   });
   app.save(services);
@@ -83,6 +100,7 @@ migrate((app) => {
       { name: "cover_image", type: "text" }, // path under web/public/images/
       { name: "line_link", type: "url" },
       { name: "is_active", type: "bool" },
+      ...timestampFields,
     ],
     indexes: ["CREATE UNIQUE INDEX idx_workshops_slug ON workshops (slug)"],
   });
@@ -104,6 +122,7 @@ migrate((app) => {
       { name: "valid_until", type: "date" },
       { name: "line_link", type: "url" },
       { name: "is_active", type: "bool" },
+      ...timestampFields, // required — getActivePromotions() sorts by -created
     ],
   });
   app.save(promotions);
@@ -122,6 +141,7 @@ migrate((app) => {
       { name: "quote", type: "text", required: true },
       { name: "source", type: "select", values: ["facebook", "google", "other"] },
       { name: "rating", type: "number" },
+      ...timestampFields,
     ],
   });
   app.save(testimonials);
@@ -142,6 +162,7 @@ migrate((app) => {
       { name: "content", type: "editor" },
       { name: "cover_image", type: "text" },
       { name: "published_at", type: "date" },
+      ...timestampFields,
     ],
     indexes: ["CREATE UNIQUE INDEX idx_blog_posts_slug ON blog_posts (slug)"],
   });
@@ -159,6 +180,7 @@ migrate((app) => {
     fields: [
       { name: "title", type: "text", required: true },
       { name: "cover_image", type: "text" },
+      ...timestampFields,
     ],
   });
   app.save(galleryAlbums);
@@ -170,11 +192,12 @@ migrate((app) => {
     viewRule: "",
     createRule: editorsAuthRule,
     updateRule: editorsAuthRule,
-    deleteRule: editorsAuthRule,
+    deleteRule: null, // superuser-only, consistent with every other collection here
     fields: [
       { name: "album", type: "relation", collectionId: galleryAlbums.id, maxSelect: 1 },
       { name: "image", type: "text", required: true },
       { name: "caption", type: "text" },
+      ...timestampFields,
     ],
   });
   app.save(galleryImages);
@@ -192,6 +215,7 @@ migrate((app) => {
       { name: "question", type: "text", required: true },
       { name: "answer", type: "editor", required: true },
       { name: "sort_order", type: "number" },
+      ...timestampFields,
     ],
   });
   app.save(faq);
@@ -211,6 +235,11 @@ migrate((app) => {
       { name: "email", type: "email" },
       { name: "message", type: "text", required: true },
       { name: "source_page", type: "text" },
+      // PDPA — proof the visitor ticked the consent checkbox at submit time.
+      // Enforced server-side too in api/contact.ts, this field is the audit
+      // trail, not the enforcement.
+      { name: "consent_given", type: "bool", required: true },
+      ...timestampFields, // so the superuser can sort the inbox by newest
     ],
   });
   app.save(contactSubmissions);

@@ -2,7 +2,13 @@
 // empire-website pattern. Server-side reads use POCKETBASE_URL (internal docker
 // network); anything rendered as a public link uses PUBLIC_POCKETBASE_URL.
 
-const PB_URL = import.meta.env.POCKETBASE_URL || "http://127.0.0.1:8090";
+// NOTE: uses process.env, not import.meta.env — Vite statically inlines
+// import.meta.env.* at build time, which would bake in whatever value (or lack
+// of one) is present when `npm run build` runs inside the Docker image, and
+// silently ignore the POCKETBASE_URL set at container runtime by
+// docker-compose. Verified by building this file both ways and inspecting the
+// compiled dist/ output before choosing this fix.
+const PB_URL = process.env.POCKETBASE_URL || "http://127.0.0.1:8090";
 
 async function pbFetch<T>(path: string): Promise<T> {
   const res = await fetch(`${PB_URL}/api/${path}`);

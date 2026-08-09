@@ -9,7 +9,11 @@ services:
     ports:
       - "${PB_PORT:-8090}:8090"
     volumes:
-      - pb_data:/pb/pb_data
+      # Bind mount (not a named Docker volume) — on purpose, so the nightly
+      # backup script (scripts/backup-to-drive.sh, run via host crontab) can
+      # read pb_data directly without needing `docker exec` into the
+      # container. Also makes "where's the data" obvious on the VM.
+      - ${PB_DATA_DIR:-/data/englishmania/pb_data}:/pb/pb_data
     environment:
       - SUPERUSER_EMAIL=${SUPERUSER_EMAIL}
       - SUPERUSER_PASS=${SUPERUSER_PASS}
@@ -17,6 +21,11 @@ services:
   web:
     build:
       context: ./web
+      args:
+        # PUBLIC_* must be a build arg, not a runtime env var — see the note
+        # in web/Dockerfile. Everything else below is fine as runtime env
+        # since it's read via process.env in server-only code.
+        PUBLIC_TURNSTILE_SITE_KEY: ${PUBLIC_TURNSTILE_SITE_KEY}
     container_name: egm-web
     restart: unless-stopped
     depends_on:
@@ -29,6 +38,4 @@ services:
       - GOOGLE_SHEETS_ID=${GOOGLE_SHEETS_ID}
       - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON}
       - GMAIL_SENDER=${GMAIL_SENDER}
-
-volumes:
-  pb_data:
+      - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}

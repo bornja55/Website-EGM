@@ -12,29 +12,85 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up SSH
+        env:
+          GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
+          GCP_SSH_HOST: ${{ secrets.GCP_SSH_HOST }}
         run: |
+          # Secrets come in via `env:` + $VAR, not inlined as ${{ }} directly
+          # into this script. Inlining substitutes raw text into the shell
+          # script before it runs — a secret containing a quote, backtick, or
+          # $(...) would break the script or worse. $VAR is the safe way
+          # GitHub's own docs recommend. Applies to every step below too.
           mkdir -p ~/.ssh
-          echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/deploy_key
+          echo "$GCP_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.GCP_SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$GCP_SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Sync repo to VM
+        env:
+          GCP_SSH_USER: ${{ secrets.GCP_SSH_USER }}
+          GCP_SSH_HOST: ${{ secrets.GCP_SSH_HOST }}
         run: |
+          # --delete removes anything on the VM not in this repo — .env is
+          # deliberately NOT synced (it isn't in git) so it's regenerated
+          # fresh from secrets every deploy instead (next step), rather than
+          # relying on a file rsync would otherwise wipe.
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
-            --exclude 'node_modules' --exclude '.git' --exclude 'pb_data' \
-            ./ "${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_SSH_HOST }}:/opt/englishmania/"
+            --exclude 'node_modules' --exclude '.git' --exclude 'pb_data' --exclude '.env' \
+            ./ "$GCP_SSH_USER@$GCP_SSH_HOST:/opt/englishmania/"
+
+      - name: Write .env on VM
+        env:
+          GCP_SSH_USER: ${{ secrets.GCP_SSH_USER }}
+          GCP_SSH_HOST: ${{ secrets.GCP_SSH_HOST }}
+          SUPERUSER_EMAIL: ${{ secrets.SUPERUSER_EMAIL }}
+          SUPERUSER_PASS: ${{ secrets.SUPERUSER_PASS }}
+          PUBLIC_POCKETBASE_URL: ${{ secrets.PUBLIC_POCKETBASE_URL }}
+          GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+          GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+          GMAIL_SENDER: ${{ secrets.GMAIL_SENDER }}
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.PUBLIC_TURNSTILE_SITE_KEY }}
+          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
+        run: |
+          # Build the .env content locally in the runner's shell (safe — real
+          # bash variable expansion, not text substitution into a script),
+          # then pipe it over SSH instead of embedding secrets in a heredoc
+          # that follows a quoted ssh command string.
+          cat <<ENVFILE > env_payload
+          SUPERUSER_EMAIL=$SUPERUSER_EMAIL
+          SUPERUSER_PASS=$SUPERUSER_PASS
+          PUBLIC_POCKETBASE_URL=$PUBLIC_POCKETBASE_URL
+          GOOGLE_SHEETS_ID=$GOOGLE_SHEETS_ID
+          GOOGLE_SERVICE_ACCOUNT_JSON=$GOOGLE_SERVICE_ACCOUNT_JSON
+          GMAIL_SENDER=$GMAIL_SENDER
+          PUBLIC_TURNSTILE_SITE_KEY=$PUBLIC_TURNSTILE_SITE_KEY
+          TURNSTILE_SECRET_KEY=$TURNSTILE_SECRET_KEY
+          ENVFILE
+          scp -i ~/.ssh/deploy_key env_payload "$GCP_SSH_USER@$GCP_SSH_HOST:/opt/englishmania/.env"
+          rm env_payload
 
       - name: Build & restart on VM
+        env:
+          GCP_SSH_USER: ${{ secrets.GCP_SSH_USER }}
+          GCP_SSH_HOST: ${{ secrets.GCP_SSH_HOST }}
         run: |
-          ssh -i ~/.ssh/deploy_key "${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_SSH_HOST }}" '
+          ssh -i ~/.ssh/deploy_key "$GCP_SSH_USER@$GCP_SSH_HOST" '
             cd /opt/englishmania &&
-            SUPERUSER_EMAIL="${{ secrets.SUPERUSER_EMAIL }}" \
-            SUPERUSER_PASS="${{ secrets.SUPERUSER_PASS }}" \
             docker compose up -d --build
           '
+          # docker compose reads ./.env in the project directory automatically —
+          # no need to pass these as inline shell vars.
 
 # Required repo secrets (Settings -> Secrets and variables -> Actions):
-#   GCP_SSH_HOST, GCP_SSH_USER, GCP_SSH_KEY, SUPERUSER_EMAIL, SUPERUSER_PASS
-# See CLAUDE.md "Deployment" section. None of these are known to Claude —
-# set them up yourself once the e2-micro VM is provisioned.
+#   GCP_SSH_HOST, GCP_SSH_USER, GCP_SSH_KEY, SUPERUSER_EMAIL, SUPERUSER_PASS,
+#   PUBLIC_POCKETBASE_URL, GOOGLE_SHEETS_ID, GOOGLE_SERVICE_ACCOUNT_JSON,
+#   GMAIL_SENDER, PUBLIC_TURNSTILE_SITE_KEY, TURNSTILE_SECRET_KEY
+# See CLAUDE.md "Deployment" section and README's setup checklist. None of
+# these are known to Claude — set them up yourself once the e2-micro VM is
+# provisioned. GOOGLE_SHEETS_ID / GOOGLE_SERVICE_ACCOUNT_JSON / GMAIL_SENDER
+# are optional at first (contact form still works without Sheets/Gmail wired
+# up) but every secret referenced above must at least exist (can be an empty
+# string) or the "Write .env on VM" step's heredoc substitution will error.
+# TURNSTILE_SECRET_KEY is NOT optional in the same soft way — leaving it
+# empty means the anti-spam check silently no-ops (see api/contact.ts).

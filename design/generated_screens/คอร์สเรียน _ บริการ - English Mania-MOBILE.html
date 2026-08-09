@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+
+<html lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>คอร์สเรียน / บริการ - English Mania by KruYam</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap');
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2f3132",
+                        "outline-variant": "#e4beb8",
+                        "surface-variant": "#e2e2e4",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#fede5a",
+                        "red-dark": "#c9301f",
+                        "on-primary-fixed": "#410100",
+                        "on-tertiary-container": "#fbfcff",
+                        "tertiary-fixed": "#c2e8ff",
+                        "surface-tint": "#b81f11",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#746100",
+                        "pure-white": "#ffffff",
+                        "primary-container": "#d93725",
+                        "on-tertiary-fixed-variant": "#004d68",
+                        "tertiary-container": "#007da8",
+                        "surface-container-low": "#f3f3f5",
+                        "surface-dim": "#d9dadc",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e2e2e4",
+                        "inverse-primary": "#ffb4a8",
+                        "on-tertiary-fixed": "#001e2c",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f0f0f2",
+                        "secondary-fixed": "#ffe16b",
+                        "surface-container": "#eeeef0",
+                        "tertiary": "#006385",
+                        "tertiary-fixed-dim": "#78d1ff",
+                        "ink": "#2b2b2b",
+                        "surface-container-high": "#e8e8ea",
+                        "on-primary-container": "#fffbff",
+                        "surface": "#f9f9fb",
+                        "secondary": "#6f5d00",
+                        "primary-fixed": "#ffdad4",
+                        "surface-bright": "#f9f9fb",
+                        "background": "#f9f9fb",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#221b00",
+                        "line-green": "#06c755",
+                        "on-secondary-fixed-variant": "#544600",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#5b403c",
+                        "on-background": "#1a1c1d",
+                        "outline": "#8f706a",
+                        "secondary-fixed-dim": "#e4c543",
+                        "on-surface": "#1a1c1d",
+                        "primary": "#b51c0f",
+                        "primary-fixed-dim": "#ffb4a8",
+                        "on-primary-fixed-variant": "#930300"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap": "16px",
+                        "gutter": "24px",
+                        "section-v-padding-lg": "160px",
+                        "section-v-padding-sm": "64px",
+                        "container-max": "1100px",
+                        "section-v-padding-md": "96px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["Noto Sans Thai", "sans-serif"],
+                        "title-lg": ["Noto Sans Thai", "sans-serif"],
+                        "display-hero-mobile": ["Noto Sans Thai", "sans-serif"],
+                        "headline-section-mobile": ["Noto Sans Thai", "sans-serif"],
+                        "display-hero": ["Noto Sans Thai", "sans-serif"],
+                        "body-main": ["Noto Sans Thai", "sans-serif"],
+                        "label-caps": ["Noto Sans Thai", "sans-serif"],
+                        "headline-section": ["Noto Sans Thai", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "title-lg": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "display-hero-mobile": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-section-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "display-hero": ["72px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-main": ["19px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["14px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-section": ["48px", { "lineHeight": "1.2", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-main antialiased selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopAppBar -->
+<header class="bg-pure-white dark:bg-surface-container-lowest fixed top-0 w-full z-50 border-b border-surface-container-high dark:border-outline-variant flat no shadows">
+<div class="flex justify-between items-center max-w-[1100px] mx-auto px-gutter h-20">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="school" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-title-lg text-title-lg font-bold text-on-surface dark:text-inverse-on-surface">English Mania</span>
+</div>
+<nav class="hidden md:flex gap-8">
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">หน้าแรก</a>
+<a class="text-primary dark:text-primary-fixed font-bold border-b-2 border-primary hover:text-primary transition-colors duration-200" href="#">คอร์สเรียน</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">รีวิว</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">ติดต่อเรา</a>
+</nav>
+<button class="bg-line-green hover:bg-opacity-90 text-pure-white font-title-lg text-title-lg px-6 py-2 rounded-full transition-all duration-200 hidden md:flex items-center gap-2">
+                จองผ่าน LINE
+            </button>
+<!-- Mobile Menu Toggle (Decorative) -->
+<button class="md:hidden text-on-surface">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-20">
+<section class="py-section-v-padding-sm md:py-section-v-padding-lg max-w-[1100px] mx-auto px-gutter">
+<!-- Header Section -->
+<div class="text-center max-w-3xl mx-auto mb-16 md:mb-24">
+<h1 class="font-display-hero-mobile text-display-hero-mobile md:font-display-hero md:text-display-hero text-ink mb-6">
+                    คอร์สเรียน / บริการ
+                </h1>
+<p class="font-body-main text-body-main text-on-surface-variant">
+                    เลือกรูปแบบการเรียนที่เหมาะสมกับคุณที่สุด พร้อมสิ่งอำนวยความสะดวกครบครัน
+                </p>
+</div>
+<!-- Bento Grid Services -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+<!-- Service 1: Rent Room -->
+<div class="bg-pure-white rounded-xl border border-surface-container-high p-8 flex flex-col justify-between hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-shadow duration-300 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary-container/5 rounded-full blur-xl group-hover:bg-primary-container/10 transition-colors duration-500"></div>
+<div>
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-full mb-6 text-primary">
+<span class="material-symbols-outlined" data-icon="meeting_room" data-weight="fill">meeting_room</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-ink mb-4">เช่าห้องสอน/ประชุม</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                            ห้องเรียนคุณภาพสูง แอร์ กระดานอัจฉริยะ โสตทัศนูปกรณ์ครบครัน เหมาะสำหรับการติวกลุ่มส่วนตัวหรือการประชุมทีมขนาดเล็ก บรรยากาศเงียบสงบ เป็นมืออาชีพ
+                        </p>
+</div>
+<div class="mt-8">
+<img class="w-full h-48 object-cover rounded-lg border border-surface-container-highest" data-alt="A bright, modern, minimalist classroom or small meeting room with a large smart board, sleek white tables, and comfortable chairs. The room is well-lit with natural light streaming through a window, creating a serene and premium academic atmosphere. Subtle red accents are visible in the decor." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAe1IGyn1G5FtIC43-sZqEykYOI6yO6ntdOVahZglnwGZKuA5wyaH5QPlPiSok0SmotBU97I-Duz1JyBFbUv6txt00INQTn5GgJQbHtTYZcBYOPnwAk6mbwo15k7pRgZ-B34tTJAGFLgiFoPaHSkC5hkM9s43y2UGGTOU0QppmuCGRB7uX10cc_ImuCC4oGbhiBMJceMXGnRsFr5jJN9UnMhUzylLvAhn1YWAYhEYmNVuToTYhsO9D7krPncDab054EGVRyzq6RpB0"/>
+</div>
+</div>
+<!-- Service 2: Group Class -->
+<div class="bg-pure-white rounded-xl border border-surface-container-high p-8 flex flex-col justify-between hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-shadow duration-300 relative overflow-hidden group">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary-container/5 rounded-full blur-xl group-hover:bg-primary-container/10 transition-colors duration-500"></div>
+<div>
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-full mb-6 text-primary">
+<span class="material-symbols-outlined" data-icon="groups" data-weight="fill">groups</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-ink mb-4">เรียนกลุ่มที่สถาบัน</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                            หลักสูตรออกแบบโดยผู้เชี่ยวชาญ เรียนร่วมกับเพื่อนๆ ในบรรยากาศที่สนุกสนานและเป็นกันเอง เน้นการมีส่วนร่วมและการฝึกปฏิบัติจริงเพื่อความเข้าใจที่ยั่งยืน
+                        </p>
+</div>
+<div class="mt-8">
+<img class="w-full h-48 object-cover rounded-lg border border-surface-container-highest" data-alt="A group of diverse students sitting around a modern, minimalist collaborative desk in a brightly lit, pristine classroom setting. They are engaged in a lively discussion with learning materials spread out. The aesthetic is clean, Apple-inspired, with high-key lighting and subtle warm tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwuC53BpKwp6s8qBkjlc_kmW-GZO-W9BzDn63exdj8Zl43ICxIDdg0PbUf425LYp3gB2QlEr0DAfEoDz86pvv7VIqgFVGlyPBUbNpZZJTU6MMURS455fWOPvKQ7NuSMSIoDWIW3YQjDMmdeDxInnOegUsnkD8wItmZjisexRiu4qnz0_GcDwHQZz-CI2RYHZT7KU9KuE9F0vlWmdlsDs_emH8CH3kXNsO5-QqwH1TDTNqh9Pu3EXT2Lp0Pe6nAFmTsFUVdVLEGAP4"/>
+</div>
+</div>
+<!-- Service 3: Private Class -->
+<div class="bg-pure-white rounded-xl border border-surface-container-high p-8 flex flex-col justify-between hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-shadow duration-300 relative overflow-hidden group md:col-span-2 lg:col-span-1">
+<div class="absolute -left-4 -bottom-4 w-32 h-32 bg-secondary-container/10 rounded-full blur-2xl group-hover:bg-secondary-container/20 transition-colors duration-500"></div>
+<div>
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-full mb-6 text-primary">
+<span class="material-symbols-outlined" data-icon="person_raised_hand" data-weight="fill">person_raised_hand</span>
+</div>
+<div class="inline-block px-3 py-1 bg-secondary-container text-on-secondary-container font-label-caps text-label-caps rounded-full mb-4">Highly Recommended</div>
+<h3 class="font-title-lg text-title-lg text-ink mb-4">เรียนพิเศษตัวต่อตัว</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                            ปรับให้เข้ากับรูปแบบการเรียนรู้และเป้าหมายของเด็กแต่ละคน ติวเตอร์ดูแลอย่างใกล้ชิด แก้ไขจุดอ่อนและเสริมจุดแข็งได้อย่างตรงจุดที่สุด
+                        </p>
+</div>
+</div>
+<!-- Service 4: Online Class -->
+<div class="bg-pure-white rounded-xl border border-surface-container-high p-8 flex flex-col justify-between hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-shadow duration-300 relative overflow-hidden group md:col-span-2 lg:col-span-1">
+<div>
+<div class="w-12 h-12 bg-surface-container flex items-center justify-center rounded-full mb-6 text-primary">
+<span class="material-symbols-outlined" data-icon="computer" data-weight="fill">computer</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-ink mb-4">เรียนออนไลน์</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant">
+                            ยืดหยุ่นเรื่องเวลาและสถานที่ ผ่าน Google Meet เรียนสด โต้ตอบได้เหมือนอยู่ในห้องเรียนจริง พร้อมบันทึกการสอนให้ทบทวนย้อนหลัง
+                        </p>
+</div>
+<div class="mt-8 flex justify-end">
+<button class="px-6 py-2 rounded-full border-2 border-primary text-primary font-body-sm text-body-sm hover:bg-primary hover:text-pure-white transition-colors duration-200">
+                            ดูรายละเอียด
+                        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- Call to Action Banner -->
+<section class="max-w-[1100px] mx-auto px-gutter mb-section-v-padding-sm md:mb-section-v-padding-lg">
+<div class="bg-primary rounded-xl p-8 md:p-12 text-center text-pure-white flex flex-col items-center justify-center relative overflow-hidden">
+<!-- Abstract Background Elements -->
+<div class="absolute top-0 right-0 w-64 h-64 bg-pure-white opacity-5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+<div class="absolute bottom-0 left-0 w-48 h-48 bg-pure-white opacity-5 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4"></div>
+<h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section mb-4 relative z-10">
+                    พร้อมเริ่มต้นการเรียนรู้หรือยัง?
+                </h2>
+<p class="font-body-main text-body-main opacity-90 mb-8 max-w-2xl relative z-10">
+                    ปรึกษาเราฟรี เพื่อค้นหาคอร์สเรียนหรือบริการที่ตอบโจทย์ความต้องการของคุณมากที่สุด
+                </p>
+<button class="bg-line-green hover:bg-opacity-90 text-pure-white font-title-lg text-title-lg px-8 py-3 rounded-full transition-all duration-200 flex items-center gap-2 shadow-[0_4px_14px_0_rgba(6,199,85,0.39)] relative z-10">
+<span class="material-symbols-outlined" data-icon="forum" data-weight="fill">forum</span>
+                    ทักแชทสอบถาม
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-ink dark:bg-on-background w-full py-section-v-padding-sm bg-ink dark:bg-on-background flat no shadows">
+<div class="max-w-[1100px] mx-auto px-gutter flex flex-col md:flex-row justify-between items-center gap-stack-gap">
+<div class="text-center md:text-left">
+<div class="font-title-lg text-title-lg font-bold text-pure-white mb-2">English Mania</div>
+<div class="font-body-sm text-body-sm text-surface-variant dark:text-surface-dim">
+                    © 2024 English Mania by KruYam. All rights reserved.
+                </div>
+</div>
+<nav class="flex flex-wrap justify-center md:justify-end gap-6 font-body-sm text-body-sm">
+<a class="text-secondary-fixed font-bold" href="#">คอร์สเรียน</a>
+<a class="text-surface-variant dark:text-surface-dim hover:text-secondary-fixed-dim transition-colors" href="#">รีวิวจากนักเรียน</a>
+<a class="text-surface-variant dark:text-surface-dim hover:text-secondary-fixed-dim transition-colors" href="#">คำถามที่พบบ่อย</a>
+<a class="text-surface-variant dark:text-surface-dim hover:text-secondary-fixed-dim transition-colors" href="#">ติดต่อเรา</a>
+</nav>
+</div>
+</footer>
+</body></html>

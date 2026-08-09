@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+
+<html class="light" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>เวิร์กช็อป &amp; กิจกรรม - English Mania</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#ffffff",
+                        "background": "#f9f9fb",
+                        "surface-container-low": "#f3f3f5",
+                        "on-primary-fixed-variant": "#930300",
+                        "on-primary-fixed": "#410100",
+                        "inverse-surface": "#2f3132",
+                        "tertiary-fixed-dim": "#78d1ff",
+                        "primary": "#b51c0f",
+                        "on-surface": "#1a1c1d",
+                        "inverse-primary": "#ffb4a8",
+                        "surface-container-high": "#e8e8ea",
+                        "on-error-container": "#93000a",
+                        "on-secondary-container": "#746100",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#ffe16b",
+                        "on-secondary-fixed-variant": "#544600",
+                        "error": "#ba1a1a",
+                        "tertiary-container": "#007da8",
+                        "outline-variant": "#e4beb8",
+                        "surface-container": "#eeeef0",
+                        "on-primary-container": "#fffbff",
+                        "primary-fixed": "#ffdad4",
+                        "surface-tint": "#b81f11",
+                        "line-green": "#06c755",
+                        "on-secondary-fixed": "#221b00",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e2e2e4",
+                        "on-surface-variant": "#5b403c",
+                        "inverse-on-surface": "#f0f0f2",
+                        "surface": "#f9f9fb",
+                        "primary-container": "#d93725",
+                        "error-container": "#ffdad6",
+                        "pure-white": "#ffffff",
+                        "primary-fixed-dim": "#ffb4a8",
+                        "red-dark": "#c9301f",
+                        "outline": "#8f706a",
+                        "surface-variant": "#e2e2e4",
+                        "on-background": "#1a1c1d",
+                        "ink": "#2b2b2b",
+                        "on-tertiary-container": "#fbfcff",
+                        "on-error": "#ffffff",
+                        "secondary-fixed-dim": "#e4c543",
+                        "secondary": "#6f5d00",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#001e2c",
+                        "secondary-container": "#fede5a",
+                        "surface-bright": "#f9f9fb",
+                        "tertiary": "#006385",
+                        "tertiary-fixed": "#c2e8ff",
+                        "on-tertiary-fixed-variant": "#004d68",
+                        "surface-dim": "#d9dadc"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "section-v-padding-lg": "160px",
+                        "section-v-padding-sm": "64px",
+                        "section-v-padding-md": "96px",
+                        "container-max": "1100px",
+                        "stack-gap": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-section": ["notoSansThai", "sans-serif"],
+                        "headline-section-mobile": ["notoSansThai", "sans-serif"],
+                        "title-lg": ["notoSansThai", "sans-serif"],
+                        "display-hero-mobile": ["notoSansThai", "sans-serif"],
+                        "label-caps": ["notoSansThai", "sans-serif"],
+                        "body-sm": ["notoSansThai", "sans-serif"],
+                        "display-hero": ["notoSansThai", "sans-serif"],
+                        "body-main": ["notoSansThai", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "headline-section": ["48px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "headline-section-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "title-lg": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "display-hero-mobile": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "label-caps": ["14px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-sm": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "display-hero": ["72px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-main": ["19px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap');
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-main antialiased min-h-screen flex flex-col pt-20">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-pure-white border-b border-surface-container-high hidden md:flex">
+<div class="flex justify-between items-center px-gutter h-20 max-w-container-max mx-auto w-full">
+<button aria-label="Menu" class="text-primary hover:opacity-70 transition-opacity">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<a class="font-headline-section text-headline-section-mobile text-primary tracking-tight" href="#">
+                English Mania
+            </a>
+<nav class="hidden lg:flex items-center gap-8">
+<a class="font-title-lg text-title-lg text-on-surface-variant hover:text-primary transition-colors" href="#">Home</a>
+<a class="font-title-lg text-title-lg text-primary font-semibold hover:text-primary transition-colors" href="#">Workshops</a>
+<a class="font-title-lg text-title-lg text-on-surface-variant hover:text-primary transition-colors" href="#">My Bookings</a>
+<a class="font-title-lg text-title-lg text-on-surface-variant hover:text-primary transition-colors" href="#">Profile</a>
+</nav>
+<button aria-label="Search" class="text-primary hover:opacity-70 transition-opacity">
+<span class="material-symbols-outlined">search</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-grow w-full max-w-container-max mx-auto px-gutter py-section-v-padding-md">
+<!-- Header Section -->
+<div class="text-center mb-16 max-w-2xl mx-auto">
+<h1 class="font-display-hero-mobile md:font-display-hero text-display-hero-mobile md:text-display-hero text-on-surface mb-4">
+                เวิร์กช็อป &amp; กิจกรรม
+            </h1>
+<p class="font-body-main text-body-main text-on-surface-variant">
+                ที่นั่งจำกัด จองผ่าน LINE เท่านั้น
+            </p>
+</div>
+<!-- Workshops Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Card 1 -->
+<article class="bg-pure-white rounded-xl border border-surface-container-high overflow-hidden flex flex-col group hover:shadow-sm transition-all duration-300">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Children in a bright classroom wearing magnifying glasses looking at insects." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1TYzNk9SutMIZM4OJpobbmBDCHzCbg2aFNTsQ3OlCTcn1_7C5UQdkVwN9OXeB97JJnbcAHm5iiRYDV1_aM8r6ZQgUe4kX7amHT8LMR6Uhv4gAfE76cWXB4npPi9VHrgghYMybu1oa-_xbEdAywo-XBTvpwOCM7cYfZYRxExCAgAQxbNRtvblanymOkoEgb5t6cMWn4XDK_1YRMAOQU3G8yVwRpls6h4f6h_BkxWjmhGrw2JupagWDHUkrtssd5wVShIpMjusZN4M"/>
+<div class="absolute top-4 right-4 bg-error text-on-error px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">timer</span>
+                        ที่นั่งจำกัด 10 ที่
+                    </div>
+</div>
+<div class="p-8 flex flex-col flex-grow">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-3 line-clamp-2">
+                        Insect Pinning Workshop (English program)
+                    </h2>
+<div class="flex items-center gap-2 text-on-surface-variant mb-6 text-sm">
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+<span>เสาร์ที่ 15 มีนาคม | 13:00 - 16:00</span>
+</div>
+<div class="mt-auto flex items-center justify-between pt-6 border-t border-surface-container-low">
+<div class="font-title-lg text-title-lg font-bold text-on-surface">
+                            1,500 บาท
+                        </div>
+<button class="bg-line-green hover:opacity-90 text-pure-white font-bold py-3 px-6 rounded-full transition-opacity flex items-center gap-2">
+<span>จองผ่าน LINE</span>
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</button>
+</div>
+</div>
+</article>
+<!-- Card 2 -->
+<article class="bg-pure-white rounded-xl border border-surface-container-high overflow-hidden flex flex-col group hover:shadow-sm transition-all duration-300">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" data-alt="Group of teenagers smiling and playing a board game around a table in a modern library setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYJUKqr8VMj7MZXPXIQ5fTX6nLxzI1EymssylHoDoQnTCQLwYpCjaxz-LuAEZHPjyYsdya6SP9oBeGitV_5uRr6QfoidpXTkv2O2WOq9alivPSup5bJtYm0607Y9DD1IVBxMwou89zpOiU3VgTrYiZpWSDORqAq8pdBHWH-mKXEgtBYmXVzYgk-z55gH7LKfd-GMpr0AQNRXCTGBHp3WTDOPsqhlHGf-H1Z7zjEgeCgALqcpiYxZp6E4c-e_3rZ1GEUpNioSrZZVc"/>
+<div class="absolute top-4 right-4 bg-error text-on-error px-3 py-1.5 rounded-full text-sm font-semibold flex items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">timer</span>
+                        ที่นั่งจำกัด 5 ที่
+                    </div>
+</div>
+<div class="p-8 flex flex-col flex-grow">
+<h2 class="font-title-lg text-title-lg text-on-surface mb-3 line-clamp-2">
+                        English Board Game Day
+                    </h2>
+<div class="flex items-center gap-2 text-on-surface-variant mb-6 text-sm">
+<span class="material-symbols-outlined text-[18px]">calendar_month</span>
+<span>อาทิตย์ที่ 22 มีนาคม | 10:00 - 12:00</span>
+</div>
+<div class="mt-auto flex items-center justify-between pt-6 border-t border-surface-container-low">
+<div class="font-title-lg text-title-lg font-bold text-on-surface">
+                            500 บาท
+                        </div>
+<button class="bg-line-green hover:opacity-90 text-pure-white font-bold py-3 px-6 rounded-full transition-opacity flex items-center gap-2">
+<span>จองผ่าน LINE</span>
+<span class="material-symbols-outlined text-[20px]">chat</span>
+</button>
+</div>
+</div>
+</article>
+</div>
+<!-- Empty State (Hidden by default, shown here for structure as requested) -->
+<div class="hidden mt-20 text-center py-16 bg-surface-container-lowest rounded-xl border border-surface-container-high border-dashed">
+<span class="material-symbols-outlined text-4xl text-surface-variant mb-4">event_busy</span>
+<p class="font-body-main text-body-main text-on-surface-variant">
+                ยังไม่มีเวิร์กช็อปที่เปิดจองตอนนี้ ติดตามได้ทาง Facebook
+            </p>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl border-t border-surface-container-high bg-pure-white/80 backdrop-blur-md pb-safe">
+<div class="flex justify-around items-center px-4 py-3">
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-low transition-all active:scale-95 rounded-xl" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+<span class="font-label-caps text-label-caps">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary font-bold bg-primary-container/10 rounded-xl px-4 py-1 hover:bg-surface-container-low transition-all active:scale-95" href="#">
+<span class="material-symbols-outlined mb-1" style="font-variation-settings: 'FILL' 1;">event</span>
+<span class="font-label-caps text-label-caps">Workshops</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-low transition-all active:scale-95 rounded-xl" href="#">
+<span class="material-symbols-outlined mb-1">confirmation_number</span>
+<span class="font-label-caps text-label-caps">My Bookings</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-low transition-all active:scale-95 rounded-xl" href="#">
+<span class="material-symbols-outlined mb-1">person</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+</div>
+</nav>
+<!-- Footer -->
+<footer class="w-full py-section-v-padding-sm border-t border-surface-container-high bg-surface-container-lowest mt-auto mb-20 md:mb-0">
+<div class="max-w-container-max mx-auto px-gutter flex flex-col md:flex-row justify-between gap-stack-gap items-center md:items-start">
+<div class="font-title-lg text-title-lg text-primary mb-4 md:mb-0">
+                English Mania
+            </div>
+<div class="flex flex-wrap justify-center md:justify-end gap-6 md:gap-8">
+<a class="font-body-sm text-body-sm text-primary hover:text-primary transition-colors cursor-pointer" href="#">Workshops</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Courses</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">About Us</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Contact</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors cursor-pointer" href="#">Privacy Policy</a>
+</div>
+<div class="font-body-sm text-body-sm text-on-surface-variant mt-8 md:mt-0 w-full text-center md:w-auto md:text-left text-sm opacity-70">
+                © 2024 English Mania. All rights reserved.
+            </div>
+</div>
+</footer>
+</body></html>

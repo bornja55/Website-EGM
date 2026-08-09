@@ -1,0 +1,62 @@
+---
+export const prerender = false;
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getSiteSettings } from "../lib/pocketbase";
+const settings = await getSiteSettings().catch(() => null);
+---
+
+{/*
+  DRAFT — reviewed by Claude for structure/completeness against common PDPA
+  notice requirements (what data, why, how long, who to contact, rights),
+  but this is NOT legal advice and has NOT been reviewed by a lawyer. Get an
+  actual PDPA-qualified reviewer to check this before it goes live — Thai
+  PDPA has specific requirements (e.g. DPO designation thresholds, exact
+  retention justifications) that a template can't fully cover.
+*/}
+
+<BaseLayout title="นโยบายความเป็นส่วนตัว">
+  <section class="section container" style="max-width: 700px;">
+    <h1>นโยบายความเป็นส่วนตัว</h1>
+    <p style="opacity:0.7; font-size:0.9rem;">
+      ปรับปรุงล่าสุด: [ใส่วันที่ก่อนเผยแพร่จริง] — ร่างนี้ยังไม่ผ่านการตรวจสอบโดยผู้เชี่ยวชาญด้านกฎหมาย
+    </p>
+
+    <h2>เราเก็บข้อมูลอะไรบ้าง</h2>
+    <p>
+      เมื่อคุณกรอกแบบฟอร์มติดต่อเราบนเว็บไซต์นี้ เราจะเก็บข้อมูลต่อไปนี้: ชื่อ, เบอร์โทรศัพท์ (ถ้าให้ไว้),
+      อีเมล (ถ้าให้ไว้), และข้อความที่คุณส่งมา
+    </p>
+
+    <h2>เราใช้ข้อมูลนี้ทำอะไร</h2>
+    <p>
+      ใช้เพื่อติดต่อกลับและตอบคำถามเกี่ยวกับคอร์สเรียนหรือกิจกรรมที่คุณสนใจเท่านั้น เราไม่ขายหรือ
+      ให้เช่าข้อมูลของคุณแก่บุคคลภายนอก
+    </p>
+
+    <h2>เราเก็บข้อมูลไว้นานแค่ไหน</h2>
+    <p>
+      เราเก็บข้อมูลจากแบบฟอร์มติดต่อไว้ไม่เกิน [ระบุระยะเวลา เช่น 12 เดือน] นับจากวันที่ส่ง
+      เว้นแต่คุณจะเป็นลูกค้าที่ลงทะเบียนเรียนกับเรา ซึ่งจะเก็บตามระยะเวลาที่กฎหมายกำหนดสำหรับ
+      เอกสารทางธุรกิจ
+    </p>
+
+    <h2>สิทธิของคุณ</h2>
+    <p>
+      คุณมีสิทธิขอเข้าถึง แก้ไข หรือขอให้ลบข้อมูลส่วนบุคคลของคุณได้ตลอดเวลา โดยติดต่อเราตามช่องทาง
+      ด้านล่าง
+    </p>
+
+    <h2>ติดต่อเรา</h2>
+    <p>
+      {settings?.company_name_th ?? "บริษัท อิงลิช เมเนีย จำกัด"}<br />
+      โทร: {settings?.phone ?? "098 579 5693"}<br />
+      {settings?.facebook_url && <>Facebook: <a href={settings.facebook_url}>{settings.facebook_url}</a></>}
+    </p>
+
+    <h2>คุกกี้ (Cookies)</h2>
+    <p>
+      เว็บไซต์นี้ใช้ Cloudflare Turnstile เพื่อป้องกันสแปมในแบบฟอร์มติดต่อเท่านั้น ไม่มีการใช้คุกกี้
+      เพื่อติดตามพฤติกรรมการใช้งานหรือโฆษณา
+    </p>
+  </section>
+</BaseLayout>

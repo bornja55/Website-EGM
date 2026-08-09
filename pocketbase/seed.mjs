@@ -50,7 +50,9 @@ async function main() {
     company_name_th: "บริษัท อิงลิช เมเนีย จำกัด",
     company_registration_no: "0125568032059",
     facebook_url: "https://www.facebook.com/englishmaniaofficial",
-    google_maps_embed_url: "",
+    // Basic Maps embed by address text — no API key needed. Swap for a
+    // pinned place-ID embed later if the address ever proves ambiguous.
+    google_maps_embed_url: "https://www.google.com/maps?q=" + encodeURIComponent("62/35 ซอยบางใหญ่ซิตี้ 9 เสาธงหิน บางบัวทอง นนทบุรี 11140") + "&output=embed",
   });
 
   console.log("Seeding services...");

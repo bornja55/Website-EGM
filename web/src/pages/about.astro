@@ -4,18 +4,76 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout title="เกี่ยวกับเรา">
-  <section class="section container">
-    <h1>เกี่ยวกับเรา</h1>
-    <p>ค่าเรียนเป็นมิตร ไม่คิดราคาศัตรูแน่นอน เพราะเราเข้าใจการเรียนภาษาต้องใช้เวลา
-      เราจึงทำค่าเรียนให้เหมาะสม เพื่อส่งลูกมาได้จนสามารถประสบความสำเร็จในการสื่อสาร
-      เรียนสนุก เข้าใจง่าย ตรงประเด็น เดินทางสะดวกด้วย MRT ตลาดบางใหญ่ ตรงข้ามเซ็นทรัลเวสเกต</p>
-
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1.5rem; margin-top:2rem;">
-      <div class="card"><strong>7+ ปี</strong><p>ประสบการณ์การสอน Online และ Onsite</p></div>
-      <div class="card"><strong>100+ รางวัล</strong><p>จากการแข่งขันและสอบเข้า</p></div>
-      <div class="card"><strong>2,000+ ครอบครัว</strong><p>เสียงตอบรับที่ชื่นชอบ</p></div>
-      <div class="card"><strong>50+ ทีมงาน</strong><p>ติวเตอร์มืออาชีพ</p></div>
+  <section class="section hero-text">
+    <div class="container">
+      <h1 class="hero-heading">เกี่ยวกับเรา</h1>
+      <p class="hero-sub">ค่าเรียนเป็นมิตร ไม่คิดราคาศัตรูแน่นอน เพราะเราเข้าใจการเรียนภาษาต้องใช้เวลา
+        เราจึงทำค่าเรียนให้เหมาะสม เพื่อส่งลูกมาได้จนสามารถประสบความสำเร็จในการสื่อสาร
+        เรียนสนุก เข้าใจง่าย ตรงประเด็น เดินทางสะดวกด้วย MRT ตลาดบางใหญ่ ตรงข้ามเซ็นทรัลเวสเกต</p>
+      {/* TODO: real classroom photo goes here once available — see
+          design/DESIGN.md "full-bleed, high-quality photography" direction.
+          Deliberately not hotlinking Stitch's AI-generated placeholder image. */}
     </div>
-    <!-- TODO: content hasn't been refreshed in ~1 year, revise copy with the user before launch -->
+  </section>
+
+  <section class="section section-neutral">
+    <div class="container">
+      <div class="grid grid-4">
+        <div class="card stat-card">
+          <span class="stat-number">7+ ปี</span>
+          <span class="stat-label">ประสบการณ์การสอน Online และ Onsite</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-number">100+</span>
+          <span class="stat-label">รางวัลจากการแข่งขันและสอบเข้า</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-number">2,000+</span>
+          <span class="stat-label">ครอบครัวที่ให้ความไว้วางใจ</span>
+        </div>
+        <div class="card stat-card">
+          <span class="stat-number">50+</span>
+          <span class="stat-label">ทีมงานติวเตอร์มืออาชีพ</span>
+        </div>
+      </div>
+      <!-- TODO: content hasn't been refreshed in ~1 year, revise copy with the user before launch -->
+    </div>
   </section>
 </BaseLayout>
+
+<style>
+  /* Ported from design/generated_screens/เกี่ยวกับเรา - English Mania
+     (Mobile)-MOBILE.html — hero + 4-stat grid. */
+  .hero-text {
+    text-align: center;
+  }
+  .hero-sub {
+    max-width: 44rem;
+    margin: 1.25rem auto 0;
+    color: rgba(43, 43, 43, 0.75);
+    line-height: 1.8;
+  }
+  .grid {
+    display: grid;
+    gap: 1.25rem;
+  }
+  .grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .stat-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--em-red);
+  }
+  .stat-label {
+    font-size: 0.9rem;
+    color: rgba(43, 43, 43, 0.7);
+  }
+</style>

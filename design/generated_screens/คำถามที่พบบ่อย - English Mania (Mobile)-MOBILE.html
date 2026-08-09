@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FAQ - English Mania</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "outline-variant": "#e4beb8",
+                      "on-tertiary": "#ffffff",
+                      "primary-container": "#d93725",
+                      "on-primary": "#ffffff",
+                      "surface-bright": "#f9f9fb",
+                      "surface-container-highest": "#e2e2e4",
+                      "background": "#f9f9fb",
+                      "tertiary-fixed": "#c2e8ff",
+                      "on-secondary-fixed": "#221b00",
+                      "secondary": "#6f5d00",
+                      "ink": "#2b2b2b",
+                      "error-container": "#ffdad6",
+                      "error": "#ba1a1a",
+                      "primary-fixed": "#ffdad4",
+                      "on-error": "#ffffff",
+                      "surface-variant": "#e2e2e4",
+                      "primary": "#b51c0f",
+                      "tertiary": "#006385",
+                      "surface": "#f9f9fb",
+                      "on-secondary-fixed-variant": "#544600",
+                      "secondary-container": "#fede5a",
+                      "outline": "#8f706a",
+                      "secondary-fixed-dim": "#e4c543",
+                      "surface-container-low": "#f3f3f5",
+                      "on-tertiary-fixed-variant": "#004d68",
+                      "line-green": "#06c755",
+                      "inverse-primary": "#ffb4a8",
+                      "on-surface-variant": "#5b403c",
+                      "primary-fixed-dim": "#ffb4a8",
+                      "on-tertiary-fixed": "#001e2c",
+                      "surface-container": "#eeeef0",
+                      "inverse-surface": "#2f3132",
+                      "on-background": "#1a1c1d",
+                      "on-secondary": "#ffffff",
+                      "surface-container-high": "#e8e8ea",
+                      "surface-tint": "#b81f11",
+                      "on-primary-container": "#fffbff",
+                      "surface-dim": "#d9dadc",
+                      "on-error-container": "#93000a",
+                      "inverse-on-surface": "#f0f0f2",
+                      "pure-white": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-tertiary-container": "#fbfcff",
+                      "on-primary-fixed": "#410100",
+                      "secondary-fixed": "#ffe16b",
+                      "on-primary-fixed-variant": "#930300",
+                      "tertiary-fixed-dim": "#78d1ff",
+                      "red-dark": "#c9301f",
+                      "tertiary-container": "#007da8",
+                      "on-surface": "#1a1c1d",
+                      "on-secondary-container": "#746100"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-v-padding-md": "96px",
+                      "stack-gap": "16px",
+                      "section-v-padding-sm": "64px",
+                      "section-v-padding-lg": "160px",
+                      "container-max": "1100px",
+                      "gutter": "24px"
+              },
+              "fontFamily": {
+                      "body-main": [
+                              "Noto Sans Thai", "sans-serif"
+                      ],
+                      "label-caps": [
+                              "Noto Sans Thai", "sans-serif"
+                      ],
+                      "headline-section-mobile": [
+                              "Noto Sans Thai", "sans-serif"
+                      ],
+                      "display-hero-mobile": [
+                              "Noto Sans Thai", "sans-serif"
+                      ],
+                      "body-sm": [
+                              "Noto Sans Thai", "sans-serif"
+                      ],
+                      "display-hero": [
+                              "Noto Sans Thai", "sans-serif"
+                      ],
+                      "title-lg": [
+                              "Noto Sans Thai", "sans-serif"
+                      ],
+                      "headline-section": [
+                              "Noto Sans Thai", "sans-serif"
+                      ]
+              },
+              "fontSize": {
+                      "body-main": [
+                              "19px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-section-mobile": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "display-hero-mobile": [
+                              "40px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "body-sm": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.5",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "display-hero": [
+                              "72px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "title-lg": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.4",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-section": [
+                              "48px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "700"
+                              }
+                      ]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #f5f5f7; /* neutral-bg approach per guide */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+      </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-main">
+<!-- TopAppBar from JSON -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-gutter py-4 bg-pure-white/80 backdrop-blur-md border-b border-surface-container-highest dark:border-outline-variant flat no shadows">
+<div class="flex items-center gap-4">
+<button class="text-primary dark:text-primary-fixed-dim hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<div class="text-title-lg font-title-lg font-bold text-ink dark:text-pure-white">
+                English Mania
+            </div>
+</div>
+<div>
+<button class="bg-line-green text-pure-white px-6 py-2 rounded-full font-label-caps text-label-caps hover:opacity-80 transition-opacity active:scale-95 transition-transform duration-200">
+                Book via LINE
+            </button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="pt-[100px] pb-section-v-padding-lg md:pt-[120px]">
+<!-- FAQ Header Section -->
+<section class="max-w-container-max mx-auto px-gutter text-center mb-section-v-padding-sm md:mb-section-v-padding-md">
+<h1 class="font-display-hero-mobile text-display-hero-mobile md:font-display-hero md:text-display-hero text-ink mb-4">
+                คำถามที่พบบ่อย
+            </h1>
+<p class="font-title-lg text-title-lg text-on-surface-variant max-w-2xl mx-auto">
+                รวบรวมคำถามที่พบบ่อยจากผู้ปกครองและนักเรียน
+            </p>
+</section>
+<!-- FAQ Cards Section -->
+<section class="max-w-[800px] mx-auto px-gutter flex flex-col gap-stack-gap">
+<!-- Card 1 -->
+<div class="bg-pure-white rounded-[16px] border border-surface-container-highest p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-shadow duration-300">
+<h3 class="font-title-lg text-title-lg text-ink mb-3 flex items-start gap-3">
+<span class="text-primary material-symbols-outlined mt-1">help</span>
+                    เดินทางมาเรียนที่สถาบันสะดวกไหม?
+                </h3>
+<p class="font-body-main text-body-main text-on-surface-variant pl-[36px]">
+                    เดินทางสะดวกด้วย MRT ตลาดบางใหญ่ ตรงข้ามเซ็นทรัลเวสเกต
+                </p>
+</div>
+<!-- Card 2 -->
+<div class="bg-pure-white rounded-[16px] border border-surface-container-highest p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-shadow duration-300">
+<h3 class="font-title-lg text-title-lg text-ink mb-3 flex items-start gap-3">
+<span class="text-primary material-symbols-outlined mt-1">help</span>
+                    รับเด็กอายุตั้งแต่กี่ขวบ?
+                </h3>
+<p class="font-body-main text-body-main text-on-surface-variant pl-[36px]">
+                    เรารับนักเรียนตั้งแต่ 4 ขวบขึ้นไป โดยมีคอร์สที่แบ่งตามช่วงวัยและระดับพื้นฐาน
+                </p>
+</div>
+<!-- Card 3 -->
+<div class="bg-pure-white rounded-[16px] border border-surface-container-highest p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-shadow duration-300">
+<h3 class="font-title-lg text-title-lg text-ink mb-3 flex items-start gap-3">
+<span class="text-primary material-symbols-outlined mt-1">help</span>
+                    มีคอร์สเรียนออนไลน์ไหม?
+                </h3>
+<p class="font-body-main text-body-main text-on-surface-variant pl-[36px]">
+                    มีค่ะ เรามีคอร์สเรียนออนไลน์ผ่าน Google Meet เน้นการโต้ตอบจริงเหมือนเรียนในห้อง
+                </p>
+</div>
+<!-- Card 4 -->
+<div class="bg-pure-white rounded-[16px] border border-surface-container-highest p-8 shadow-[0_4px_24px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_32px_rgba(0,0,0,0.04)] transition-shadow duration-300">
+<h3 class="font-title-lg text-title-lg text-ink mb-3 flex items-start gap-3">
+<span class="text-primary material-symbols-outlined mt-1">help</span>
+                    สามารถทดลองเรียนก่อนได้ไหม?
+                </h3>
+<p class="font-body-main text-body-main text-on-surface-variant pl-[36px]">
+                    ได้ค่ะ คุณพ่อคุณแม่สามารถนัดหมายวันเวลาเพื่อพาน้องมาทดลองเรียนและวัดระดับภาษาได้ฟรี
+                </p>
+</div>
+</section>
+<!-- CTA Section to break up the flow nicely -->
+<section class="max-w-container-max mx-auto px-gutter mt-section-v-padding-md text-center">
+<div class="bg-surface-container-low rounded-[24px] p-12 md:p-16 border border-surface-container-highest">
+<h2 class="font-headline-section-mobile text-headline-section-mobile md:font-headline-section md:text-headline-section text-ink mb-6">
+                    ยังมีข้อสงสัยเพิ่มเติม?
+                </h2>
+<p class="font-body-main text-body-main text-on-surface-variant mb-8 max-w-lg mx-auto">
+                    ทีมงานของเราพร้อมให้คำปรึกษาและตอบทุกคำถามเกี่ยวกับการเรียนการสอน
+                </p>
+<button class="bg-line-green text-pure-white px-8 py-4 rounded-full font-label-caps text-label-caps hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+<span class="material-symbols-outlined">chat</span>
+                    ปรึกษาเราทาง LINE
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer from JSON -->
+<footer class="w-full py-section-v-padding-sm px-gutter flex flex-col md:flex-row justify-between items-center gap-stack-gap border-t border-surface-container-highest dark:border-outline-variant bg-surface-container-low dark:bg-surface-dim flat no shadows">
+<div class="text-title-lg font-title-lg font-bold text-ink dark:text-pure-white">
+            English Mania
+        </div>
+<nav class="flex flex-wrap justify-center gap-6">
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Courses</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Success Stories</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">About Us</a>
+<a class="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">Contact</a>
+<a class="font-body-sm text-body-sm text-ink dark:text-pure-white font-bold hover:text-primary dark:hover:text-primary-fixed-dim transition-colors" href="#">FAQ</a>
+</nav>
+<div class="font-body-sm text-body-sm text-on-surface-variant dark:text-surface-variant">
+            © 2024 English Mania Tutoring. All rights reserved.
+        </div>
+</footer>
+</body></html>

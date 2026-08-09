@@ -3,6 +3,11 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+# PUBLIC_* vars must be present at BUILD time — Vite inlines them into the
+# client bundle, unlike server-only vars (see lib/pocketbase.ts note, which
+# deliberately does the opposite: process.env at runtime, not a build ARG).
+ARG PUBLIC_TURNSTILE_SITE_KEY
+ENV PUBLIC_TURNSTILE_SITE_KEY=$PUBLIC_TURNSTILE_SITE_KEY
 RUN npm run build
 
 FROM node:22-alpine

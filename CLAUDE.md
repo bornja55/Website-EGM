@@ -92,16 +92,104 @@ theme tokens from the existing logo, docker-compose, GitHub Actions workflow ske
 Project relocated from D:\Web EnglishMania to J:\My Drive\Web EngMania on 2026-08-08 —
 this is now the single working copy.
 
+## Decisions from the second planning round (2026-08-08)
+
+- **TLS**: Cloudflare Proxy mode (Full) — Cloudflare terminates HTTPS; the VM
+  serves plain HTTP behind it, port 443 is never opened on the VM itself.
+- **Spam protection**: Cloudflare Turnstile on the contact form (free,
+  unlimited requests, no per-verification cap). Implemented in
+  `web/src/pages/contact.astro` (widget) and `web/src/pages/api/contact.ts`
+  (server-side `siteverify` check). Silently no-ops (protection OFF, not a
+  hard failure) if `TURNSTILE_SECRET_KEY` isn't set — don't ship to prod
+  without it configured.
+- **GCP VM provisioning**: via a generated bash wizard (not manual Console
+  clicking) to avoid mistyped `gcloud` commands — see the wizard script this
+  produced.
+- **GitHub Actions secrets**: the user fills these in by hand from the
+  checklist in README.md; Claude cannot touch credentials.
+- **Sandbox LINE OA**: a brand-new "English Mania (Test)" OA, not reused from
+  anything existing.
+- **Google Maps embed**: resolved without an API key — plain
+  `https://www.google.com/maps?q=<address>&output=embed`, already in
+  `pocketbase/seed.mjs`.
+- **About/Services copy**: shipping with the drafted-from-old-content version
+  now; user will revise later rather than blocking launch on new copy.
+
+## Decisions from the third planning round (2026-08-08, later same day)
+
+- **Backups**: `pb_data` is now a bind mount (`/data/englishmania/pb_data` on
+  the VM), not a Docker named volume, specifically so
+  `scripts/backup-to-drive.sh` can run from host crontab without `docker
+  exec`. The script uses PocketBase's own `/api/backups` endpoint (a
+  consistent server-side zip snapshot) rather than copying live SQLite files,
+  uploads to Google Drive via `rclone`, keeps 14 days by default. Needs
+  one-time setup on the VM (rclone install + `rclone config` + crontab entry
+  — see the script's header comment).
+- **PDPA**: added `web/src/pages/privacy.astro` (draft privacy policy — NOT
+  lawyer-reviewed, has placeholder brackets to fill in, get an actual PDPA
+  reviewer before launch) and a required consent checkbox on the contact
+  form, enforced both client-side (UX) and server-side in `api/contact.ts`
+  (real enforcement — a required checkbox alone doesn't stop a direct POST).
+  `contact_submissions` now has a required `consent_given` bool field as the
+  audit trail.
+
 TODO before launch:
-- Flesh out real copy from the old MakeWebEasy site (About/Services/Stats/tutors) —
-  site hasn't been updated in ~1 year, expect edits.
-- Pull latest workshop/promotion content from the English Mania Facebook page as seed
-  data.
-- Provision the GCP `e2-micro` VM and populate GitHub Actions secrets.
-- Set up the sandbox/test LINE OA for dev; swap to production OA link only at go-live.
+- Provision the GCP `e2-micro` VM (wizard script) and fill in the GitHub
+  Actions secrets checklist in README.md.
+- Create the Cloudflare Turnstile widget for `englishmania.co.th` and the new
+  sandbox LINE OA; feed both sets of keys/links into the secrets checklist /
+  `seed.mjs`.
 - Point Cloudflare DNS at the new VM at cutover (currently 301-redirects to
-  `ballevrtgab.makeweb.co`).
-- Copy `CI + Logo\logo new.png` into `web/public/images/logo.png` (see that folder's
-  README.txt).
-- `git init` this folder and push to `github.com/bornja55/Website-EGM` from your own
-  machine (Claude cannot handle GitHub credentials).
+  `ballevrtgab.makeweb.co`), and set the proxy to Full mode.
+- Copy `CI + Logo\logo new.png` into `web/public/images/logo.png` (see that
+  folder's README.txt) — still blocked on binary file copy in-session.
+- `git init` this folder and push to `github.com/bornja55/Website-EGM` from
+  your own machine (Claude cannot handle GitHub credentials) — the repo is
+  still empty, so the GitHub Actions workflow is unexercised until this
+  happens.
+- Revise the About/Services copy (currently ported from the ~1-year-stale old
+  site) when you're ready.
+- Set up `scripts/backup-to-drive.sh` on the VM (rclone + crontab) — see the
+  script's header for the one-time steps.
+- Get `web/src/pages/privacy.astro` reviewed by someone PDPA-qualified before
+  launch; fill in the `[bracketed placeholders]` (retention period, last
+  updated date).
+
+## Scrutinize round 3 (2026-08-08)
+
+- **Fixed**: contact.astro didn't reset the Turnstile widget on a failed
+  submit, only on success. Turnstile tokens are single-use and get consumed
+  by `siteverify` before the PocketBase write even happens — so any failure
+  after that point (PB down, network blip) left the button enabled with an
+  already-spent token, meaning retry would fail Turnstile a second time
+  every time. Now resets `turnstile.reset()` and re-disables the button in
+  a `finally` block covering both outcomes.
+- **Not yet verified live**: `scripts/backup-to-drive.sh`'s assumptions
+  about `/api/backups`'s response shape (flat array) and auth header
+  (`Authorization: <token>`, no `Bearer` prefix) — still can't boot
+  PocketBase in this sandbox to confirm. Dry-run this script by hand against
+  the real VM before trusting the cron schedule with it.
+
+## Scrutinize round 4 (2026-08-08) — Stitch design output review
+
+- **Found**: `design/generated_screens/` (20 files) had output from at least
+  3-4 unrelated Stitch projects mixed in with the real English Mania
+  screens — a durian-farm tracking app, a "Sovereign Global Holdings"
+  investor-relations dashboard, 4x "Origin Global Empire" screens, and a
+  "Green to Gold" services page with an unrelated olive/gold palette. User
+  is deleting these by hand — **if you see any of those names still in this
+  folder next session, they weren't cleaned up yet, don't port them.**
+- **Found**: even the correctly-named English Mania screens didn't follow
+  `DESIGN.md`'s 7 locked color tokens — Stitch invented its own Material-You
+  palette including a `tertiary` blue family (`#006385` etc.) with no basis
+  in this brand, plus near-but-not-exact reds/yellows. **Decision: strip the
+  invented blue entirely, port colors using the exact hex values in
+  `DESIGN.md`'s token table, not whatever class names Stitch generated.**
+  See the decision note added directly in `design/DESIGN.md`.
+- **Not done yet**: none of the Stitch HTML/CSS has been ported into
+  `web/src` — every `.astro` page/component is still the pre-Stitch
+  skeleton. **This is next session's main task**: once the user has pruned
+  `design/generated_screens/` down to the real ~8 English Mania screens,
+  port each into its matching Astro page/component, applying the color-token
+  substitution above as you go (don't copy Stitch's Tailwind color classes
+  verbatim — map them to the existing `global.css` tokens/classes).

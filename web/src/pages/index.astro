@@ -11,26 +11,45 @@ const [services, promotions, testimonials] = await Promise.all([
 ---
 
 <BaseLayout title="หน้าแรก">
-  <section class="section-yellow" style="text-align:center; padding: 4rem 0;">
-    <div class="container">
-      <h1 style="font-size:2.5rem; margin-bottom:0.5rem;">English Mania by KruYam</h1>
-      <p style="font-size:1.25rem;">วิธีที่ดีที่สุดในการทำนายอนาคตก็คือ การสร้างมันขึ้นมาเอง</p>
+  {/* The one deliberate yellow accent moment on this page, per DESIGN.md —
+      everywhere else uses white/neutral so this hero actually stands out
+      instead of being one of several yellow bands. Ported from the Stitch
+      homepage mockup: bigger hero, two soft decorative blurs, same copy. */}
+  <section class="section-yellow hero">
+    <div class="container hero-content">
+      <h1 class="hero-heading">English Mania by KruYam</h1>
+      <p class="hero-sub">วิธีที่ดีที่สุดในการทำนายอนาคตก็คือ การสร้างมันขึ้นมาเอง</p>
       <a class="btn" href="/contact">Booking Now</a>
     </div>
+    <div class="hero-decor hero-decor-1" aria-hidden="true"></div>
+    <div class="hero-decor hero-decor-2" aria-hidden="true"></div>
   </section>
 
   {promotions.length > 0 && (
     <section class="section">
       <div class="container">
-        <h2>โปรโมชั่นตอนนี้</h2>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+        <div class="section-header">
+          <h2>ข้อเสนอพิเศษ</h2>
+          <p>โปรโมชั่นสุดคุ้มเพื่อพัฒนาทักษะภาษาอังกฤษของคุณ</p>
+        </div>
+        <div class="grid grid-3">
           {promotions.map((p) => (
-            <div class="card">
+            <div class="card promo-card">
               <span class="badge">โปรโมชั่น</span>
               <h3>{p.title}</h3>
               <p>{p.description}</p>
-              {p.price && <p style="font-size:1.5rem; font-weight:800;">{p.price.toLocaleString()} บาท</p>}
-              {p.line_link && <a class="btn btn-line" href={p.line_link} target="_blank">จองผ่าน LINE</a>}
+              <div class="promo-footer">
+                {p.price && (
+                  <div class="promo-price">
+                    {p.price.toLocaleString()}<span>บาท</span>
+                  </div>
+                )}
+                {p.line_link && (
+                  <a class="btn btn-line" href={p.line_link} target="_blank" rel="noopener">
+                    จองผ่าน LINE
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -38,12 +57,16 @@ const [services, promotions, testimonials] = await Promise.all([
     </section>
   )}
 
-  <section class="section">
+  <section class="section section-neutral">
     <div class="container">
-      <h2>บริการของเรา</h2>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1.5rem;">
+      <div class="section-header">
+        <h2>บริการของเรา</h2>
+        <p>รูปแบบการเรียนที่หลากหลาย ตอบโจทย์ทุกความต้องการ</p>
+      </div>
+      <div class="grid grid-4">
         {services.map((s) => (
-          <div class="card">
+          <div class="card service-card">
+            <div class="icon-circle">{s.icon || s.title.charAt(0)}</div>
             <h3>{s.title}</h3>
             <p set:html={s.description} />
           </div>
@@ -53,14 +76,24 @@ const [services, promotions, testimonials] = await Promise.all([
   </section>
 
   {testimonials.length > 0 && (
-    <section class="section section-yellow">
+    <section class="section">
       <div class="container">
-        <h2>เสียงจากผู้ปกครองและนักเรียน</h2>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:1.5rem;">
+        <div class="section-header">
+          <h2>เสียงจากผู้ปกครองและนักเรียน</h2>
+          <p>ความสำเร็จของนักเรียนคือความภาคภูมิใจของเรา</p>
+        </div>
+        <div class="grid grid-3">
           {testimonials.map((t) => (
-            <div class="card">
-              <p>&ldquo;{t.quote}&rdquo;</p>
-              <strong>— {t.author_name}</strong>
+            <div class="card testimonial-card">
+              <span class="quote-mark" aria-hidden="true">&ldquo;</span>
+              <p class="testimonial-quote">&ldquo;{t.quote}&rdquo;</p>
+              <div class="testimonial-author">
+                <div class="avatar-circle">{t.author_name.charAt(0)}</div>
+                <div>
+                  <strong>{t.author_name}</strong>
+                  {t.source && <div class="testimonial-source">{t.source}</div>}
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -68,3 +101,149 @@ const [services, promotions, testimonials] = await Promise.all([
     </section>
   )}
 </BaseLayout>
+
+<style>
+  /* Page-specific layout only — colors/spacing/radius still come from the
+     shared tokens in global.css (DESIGN.md's 7-color table), nothing new
+     invented here. Ported from design/generated_screens/English Mania
+     Homepage - Mobile-MOBILE.html, minus Tailwind + the invented blue. */
+
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding: 6rem 0;
+    text-align: center;
+  }
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+  .hero-sub {
+    font-size: 1.25rem;
+    max-width: 40rem;
+    margin: 1.5rem auto 2rem;
+  }
+  .hero-decor {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.35);
+    filter: blur(40px);
+    pointer-events: none;
+  }
+  .hero-decor-1 {
+    width: 8rem;
+    height: 8rem;
+    top: 15%;
+    left: 8%;
+  }
+  .hero-decor-2 {
+    width: 12rem;
+    height: 12rem;
+    bottom: 10%;
+    right: 6%;
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 40rem;
+    margin: 0 auto 3rem;
+  }
+  .section-header p {
+    color: rgba(43, 43, 43, 0.7);
+    margin-top: 0.5rem;
+  }
+
+  .grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .grid-4 {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .promo-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .promo-footer {
+    margin-top: auto;
+    padding-top: 1.5rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .promo-price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--em-red);
+  }
+  .promo-price span {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--em-ink);
+    margin-left: 0.25rem;
+  }
+
+  .service-card {
+    text-align: center;
+  }
+  .icon-circle {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: var(--em-white);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--em-red);
+  }
+
+  .testimonial-card {
+    position: relative;
+  }
+  .quote-mark {
+    position: absolute;
+    top: 1rem;
+    left: 1.25rem;
+    font-size: 4rem;
+    font-weight: 800;
+    color: rgba(229, 64, 45, 0.08);
+    line-height: 1;
+  }
+  .testimonial-quote {
+    position: relative;
+    font-style: italic;
+    margin-top: 1.5rem;
+  }
+  .testimonial-author {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .avatar-circle {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: var(--em-neutral-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .testimonial-source {
+    font-size: 0.85rem;
+    color: rgba(43, 43, 43, 0.6);
+  }
+</style>

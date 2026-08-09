@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly GOOGLE_SHEETS_ID: string;
   readonly GOOGLE_SERVICE_ACCOUNT_JSON: string;
   readonly GMAIL_SENDER: string;
+  readonly PUBLIC_TURNSTILE_SITE_KEY: string;
 }
 
 interface ImportMeta {

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+
+<html class="light" lang="th"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>คอร์สเรียน / บริการ - English Mania</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "error-container": "#ffdad6",
+                        "inverse-surface": "#2f3132",
+                        "outline-variant": "#e4beb8",
+                        "surface-variant": "#e2e2e4",
+                        "on-secondary": "#ffffff",
+                        "secondary-container": "#fede5a",
+                        "red-dark": "#c9301f",
+                        "on-primary-fixed": "#410100",
+                        "on-tertiary-container": "#fbfcff",
+                        "tertiary-fixed": "#c2e8ff",
+                        "surface-tint": "#b81f11",
+                        "on-primary": "#ffffff",
+                        "on-secondary-container": "#746100",
+                        "pure-white": "#ffffff",
+                        "primary-container": "#d93725",
+                        "on-tertiary-fixed-variant": "#004d68",
+                        "tertiary-container": "#007da8",
+                        "surface-container-low": "#f3f3f5",
+                        "surface-dim": "#d9dadc",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-highest": "#e2e2e4",
+                        "inverse-primary": "#ffb4a8",
+                        "on-tertiary-fixed": "#001e2c",
+                        "on-tertiary": "#ffffff",
+                        "inverse-on-surface": "#f0f0f2",
+                        "secondary-fixed": "#ffe16b",
+                        "surface-container": "#eeeef0",
+                        "tertiary": "#006385",
+                        "tertiary-fixed-dim": "#78d1ff",
+                        "ink": "#2b2b2b",
+                        "surface-container-high": "#e8e8ea",
+                        "on-primary-container": "#fffbff",
+                        "surface": "#f9f9fb",
+                        "secondary": "#6f5d00",
+                        "primary-fixed": "#ffdad4",
+                        "surface-bright": "#f9f9fb",
+                        "background": "#f9f9fb",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#221b00",
+                        "line-green": "#06c755",
+                        "on-secondary-fixed-variant": "#544600",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#5b403c",
+                        "on-background": "#1a1c1d",
+                        "outline": "#8f706a",
+                        "secondary-fixed-dim": "#e4c543",
+                        "on-surface": "#1a1c1d",
+                        "primary": "#b51c0f",
+                        "primary-fixed-dim": "#ffb4a8",
+                        "on-primary-fixed-variant": "#930300"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "stack-gap": "16px",
+                        "gutter": "24px",
+                        "section-v-padding-lg": "160px",
+                        "section-v-padding-sm": "64px",
+                        "container-max": "1100px",
+                        "section-v-padding-md": "96px"
+                    },
+                    "fontFamily": {
+                        "body-sm": ["notoSansThai", "sans-serif"],
+                        "title-lg": ["notoSansThai", "sans-serif"],
+                        "display-hero-mobile": ["notoSansThai", "sans-serif"],
+                        "headline-section-mobile": ["notoSansThai", "sans-serif"],
+                        "display-hero": ["notoSansThai", "sans-serif"],
+                        "body-main": ["notoSansThai", "sans-serif"],
+                        "label-caps": ["notoSansThai", "sans-serif"],
+                        "headline-section": ["notoSansThai", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "body-sm": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "title-lg": ["24px", { "lineHeight": "1.4", "fontWeight": "600" }],
+                        "display-hero-mobile": ["40px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+                        "headline-section-mobile": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "display-hero": ["72px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-main": ["19px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["14px", { "lineHeight": "1.0", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-section": ["48px", { "lineHeight": "1.2", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'notoSansThai', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col">
+<!-- Header (Shared Component) -->
+<header class="bg-pure-white dark:bg-surface-container-lowest fixed top-0 w-full z-50 border-b border-surface-container-high dark:border-outline-variant flat no shadows">
+<div class="flex justify-between items-center max-w-[1100px] mx-auto px-gutter h-20">
+<!-- Brand -->
+<a class="flex items-center gap-2 group" href="#">
+<span class="material-symbols-outlined text-primary dark:text-primary-fixed" data-icon="school" style="font-variation-settings: 'FILL' 1;">school</span>
+<span class="font-title-lg text-title-lg font-bold text-on-surface dark:text-inverse-on-surface">English Mania</span>
+</a>
+<!-- Desktop Nav -->
+<nav class="hidden md:flex items-center gap-8">
+<!-- Assume "คอร์สเรียน" is active based on page intent -->
+<a class="text-primary dark:text-primary-fixed font-bold border-b-2 border-primary pb-1" href="#">คอร์สเรียน / บริการ</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">รีวิวจากนักเรียน</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">คำถามที่พบบ่อย</a>
+<a class="text-on-surface-variant dark:text-surface-variant font-medium hover:text-primary transition-colors duration-200" href="#">ติดต่อเรา</a>
+</nav>
+<!-- Action Button -->
+<button class="hidden md:flex items-center justify-center bg-line-green text-pure-white font-title-lg text-title-lg font-bold py-2 px-6 rounded-full hover:opacity-90 transition-opacity Active: opacity-80">
+                จองผ่าน LINE
+            </button>
+<!-- Mobile Menu Toggle (Simplified) -->
+<button class="md:hidden text-on-surface p-2">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow pt-[80px]"> <!-- pt-20 to offset fixed header -->
+<!-- Hero Section -->
+<section class="max-w-[1100px] mx-auto px-gutter pt-section-v-padding-lg pb-section-v-padding-md text-center">
+<h1 class="font-display-hero text-display-hero text-ink mb-stack-gap">คอร์สเรียน / บริการ</h1>
+<p class="font-body-main text-body-main text-on-surface-variant max-w-2xl mx-auto">
+                เลือกรูปแบบการเรียนที่เหมาะสมกับคุณที่สุด พร้อมสิ่งอำนวยความสะดวกครบครัน
+            </p>
+</section>
+<!-- Services Bento Grid -->
+<section class="max-w-[1100px] mx-auto px-gutter pb-section-v-padding-lg">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<!-- Card 1 -->
+<div class="bg-pure-white rounded-[16px] p-[32px] border border-surface-container-high transition-transform hover:-translate-y-1 duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+<div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="meeting_room" data-weight="fill" style="font-variation-settings: 'FILL' 1;">meeting_room</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-ink mb-3">เช่าห้องสอน/ประชุม</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                        ห้องเรียนคุณภาพสูง แอร์ กระดานอัจฉริยะ โสตทัศนูปกรณ์ครบครัน พร้อมสำหรับทุกการบรรยายและการระดมสมอง
+                    </p>
+</div>
+<!-- Card 2 -->
+<div class="bg-pure-white rounded-[16px] p-[32px] border border-surface-container-high transition-transform hover:-translate-y-1 duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+<div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="groups" data-weight="fill" style="font-variation-settings: 'FILL' 1;">groups</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-ink mb-3">เรียนกลุ่มที่สถาบัน</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                        หลักสูตรออกแบบโดยผู้เชี่ยวชาญ เรียนร่วมกับเพื่อนๆ ในบรรยากาศที่กระตุ้นการเรียนรู้และสนุกสนาน
+                    </p>
+</div>
+<!-- Card 3 -->
+<div class="bg-pure-white rounded-[16px] p-[32px] border border-surface-container-high transition-transform hover:-translate-y-1 duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+<div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="person_raised_hand" data-weight="fill" style="font-variation-settings: 'FILL' 1;">person_raised_hand</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-ink mb-3">เรียนพิเศษตัวต่อตัว</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                        ปรับให้เข้ากับรูปแบบการเรียนรู้และเป้าหมายของเด็กแต่ละคน เน้นการพัฒนาอย่างตรงจุดและรวดเร็ว
+                    </p>
+</div>
+<!-- Card 4 -->
+<div class="bg-pure-white rounded-[16px] p-[32px] border border-surface-container-high transition-transform hover:-translate-y-1 duration-300 shadow-[0_4px_24px_rgba(0,0,0,0.02)]">
+<div class="w-16 h-16 rounded-full bg-surface-container-low flex items-center justify-center mb-6">
+<span class="material-symbols-outlined text-primary text-4xl" data-icon="laptop_chromebook" data-weight="fill" style="font-variation-settings: 'FILL' 1;">laptop_chromebook</span>
+</div>
+<h3 class="font-title-lg text-title-lg text-ink mb-3">เรียนออนไลน์</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+                        ยืดหยุ่นเรื่องเวลาและสถานที่ เรียนสดผ่านระบบออนไลน์คุณภาพสูง ประหยัดเวลาการเดินทาง
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="w-full py-section-v-padding-sm bg-ink dark:bg-on-background flat no shadows">
+<div class="max-w-[1100px] mx-auto px-gutter flex flex-col md:flex-row justify-between items-center gap-stack-gap">
+<div class="flex flex-col items-center md:items-start gap-4">
+<span class="font-title-lg text-title-lg font-bold text-pure-white">English Mania</span>
+<span class="font-body-sm text-body-sm text-surface-variant dark:text-surface-dim">© 2024 English Mania by KruYam. All rights reserved.</span>
+</div>
+<nav class="flex flex-wrap justify-center gap-6">
+<!-- Nav Links -->
+<a class="font-body-sm text-body-sm text-secondary-fixed font-bold hover:text-secondary-fixed-dim transition-colors" href="#">คอร์สเรียน</a>
+<a class="font-body-sm text-body-sm text-surface-variant dark:text-surface-dim hover:text-secondary-fixed-dim transition-colors" href="#">รีวิวจากนักเรียน</a>
+<a class="font-body-sm text-body-sm text-surface-variant dark:text-surface-dim hover:text-secondary-fixed-dim transition-colors" href="#">คำถามที่พบบ่อย</a>
+<a class="font-body-sm text-body-sm text-surface-variant dark:text-surface-dim hover:text-secondary-fixed-dim transition-colors" href="#">ติดต่อเรา</a>
+</nav>
+</div>
+</footer>
+</body></html>

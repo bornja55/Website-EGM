@@ -1,6 +1,17 @@
 /* Brand tokens extracted from the existing logo (CI + Logo/logo new.png):
-   yellow circle background, red speech-bubble, white text. Keep as-is per
-   the CI decision — no rebrand, just a modernized layout. */
+   yellow circle background, red speech-bubble, white text. Colors unchanged
+   per the CI decision — no rebrand. Layout direction updated 2026-08-08 to
+   "clean + minimal, with flair" (Apple.com/th reference): whitespace-driven,
+   neutral-gray as the default second background instead of yellow, yellow
+   reserved as a sparse accent, flatter card shadows. See design/DESIGN.md. */
+
+@font-face {
+  font-family: 'Noto Sans Thai';
+  src: url('/fonts/NotoSansThai.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 :root {
   --em-yellow: #fada56;
@@ -8,11 +19,12 @@
   --em-red: #e5402d;
   --em-red-dark: #c9301f;
   --em-ink: #2b2b2b;
+  --em-neutral-bg: #f5f5f7; /* new default "second" section background, replaces yellow */
   --em-white: #ffffff;
 
-  --font-body: "Prompt", "Noto Sans Thai", system-ui, sans-serif;
+  --font-body: "Noto Sans Thai", "Prompt", system-ui, sans-serif;
   --radius: 16px;
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.06); /* flatter than before — was 0 4px 20px / 0.08 */
 }
 
 * { box-sizing: border-box; }
@@ -59,11 +71,24 @@ a:hover { text-decoration: underline; }
 }
 
 .section {
-  padding: 3rem 0;
+  padding: 5rem 0; /* was 3rem — more Apple-scale breathing room between sections */
 }
 
+.section-neutral {
+  background: var(--em-neutral-bg);
+}
+
+/* Sparse accent only now — use for at most one hero/callout per page, not
+   the default "every other section" alternation it used to be. */
 .section-yellow {
   background: var(--em-yellow);
+}
+
+.hero-heading {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.15;
 }
 
 .badge {

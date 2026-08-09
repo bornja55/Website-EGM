@@ -57,10 +57,39 @@ Open http://localhost:4321.
 
 GitHub Actions builds on push to `main` and deploys to a GCP `e2-micro` VM
 (Always Free tier) over SSH via `docker compose`. See `.github/workflows/deploy.yml`
-and the "Deployment" section of `CLAUDE.md` for the secrets you need to configure
-in the repo settings (Settings → Secrets and variables → Actions).
+and the "Deployment" section of `CLAUDE.md` for architecture details.
+
+TLS: Cloudflare Proxy mode (Full) — Cloudflare terminates HTTPS, VM only serves
+plain HTTP behind it. Spam protection on the contact form: Cloudflare Turnstile
+(free, unlimited).
+
+### GitHub Actions secrets checklist
+
+Fill these in at `github.com/bornja55/Website-EGM` → Settings → Secrets and
+variables → Actions → "New repository secret". Claude cannot fill these in —
+see the "Instruction source boundary" / credential-handling rules if you're
+wondering why.
+
+| Secret | Where it comes from | Required? |
+|---|---|---|
+| `GCP_SSH_HOST` | External IP of the `e2-micro` VM (from the GCP setup wizard) | Yes |
+| `GCP_SSH_USER` | The deploy user you created on the VM (wizard sets this up) | Yes |
+| `GCP_SSH_KEY` | Private half of a dedicated deploy SSH keypair (don't reuse a personal key) | Yes |
+| `SUPERUSER_EMAIL` | Pick one, e.g. `admin@englishmania.local` — used for PocketBase's first-boot superuser | Yes |
+| `SUPERUSER_PASS` | A strong password you generate for that superuser | Yes |
+| `PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare dashboard → Turnstile → create a widget for `englishmania.co.th` → "Site Key" | Yes |
+| `TURNSTILE_SECRET_KEY` | Same Turnstile widget → "Secret Key" | Yes (spam protection is silently OFF without it) |
+| `PUBLIC_POCKETBASE_URL` | `https://englishmania.co.th/pb` (or wherever you expose the PocketBase API publicly) | Yes |
+| `GOOGLE_SHEETS_ID` | ID from the Google Sheet URL you want contact-form backups logged to | No — leave blank until Sheets sync is wired up |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | A GCP service account JSON key with Sheets + Gmail API access | No — same as above |
+| `GMAIL_SENDER` | The Gmail address that sends contact-form notifications | No — same as above |
+
+Even the "No" rows need the secret to *exist* (can be an empty string) — the
+deploy workflow's `.env`-writing step will error on a totally missing secret
+reference.
 
 ## Status
 
-Scaffolded by Claude + Siraphob, 2026-08-08. See `CLAUDE.md` for what's done vs.
-still TODO.
+Scaffolded by Claude + Siraphob, 2026-08-08. Turnstile anti-spam + Cloudflare
+TLS decisions added 2026-08-08 (second planning round). See `CLAUDE.md` for
+what's done vs. still TODO.
