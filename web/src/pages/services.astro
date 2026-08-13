@@ -3,6 +3,17 @@ export const prerender = false;
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { getServices } from "../lib/pocketbase";
 const services = await getServices().catch(() => []);
+
+// Group by category (real subject catalog from the old site's footer menu:
+// ภาษาอังกฤษ / คณิตศาสตร์ / วิทยาศาสตร์ / อื่นๆ). Rows without a category
+// (or older seed data predating the category field) fall into "อื่นๆ" so
+// nothing silently disappears from the page.
+const groups = new Map<string, typeof services>();
+for (const s of services) {
+  const key = s.category || "อื่นๆ";
+  if (!groups.has(key)) groups.set(key, []);
+  groups.get(key)!.push(s);
+}
 ---
 
 <BaseLayout title="คอร์สเรียน / บริการ">
@@ -13,19 +24,32 @@ const services = await getServices().catch(() => []);
     </div>
   </section>
 
-  <section class="section section-neutral">
-    <div class="container">
-      <div class="grid grid-2">
-        {services.map((s) => (
-          <div class="card service-card">
-            <div class="icon-circle">{s.icon || s.title.charAt(0)}</div>
-            <h2>{s.title}</h2>
-            <p set:html={s.description} />
-          </div>
-        ))}
-      </div>
-    </div>
+  {/* Real photo — from the business's own Facebook photo export
+      (FB raw/Export_1786443238_452bc550/image_068.jpg, Jun 2026): a student
+      working through an English lesson on tablet + workbook. This page had
+      zero photography before — pure card grid — which is exactly the "just
+      a template" gap DESIGN.md's full-bleed photography direction exists to
+      fix. */}
+  <section class="photo-bleed">
+    <img src="/images/services-tutoring.jpg" alt="นักเรียนกำลังเรียนภาษาอังกฤษด้วยแท็บเล็ตและหนังสือแบบฝึกหัด" loading="lazy" />
   </section>
+
+  {[...groups.entries()].map(([category, items]) => (
+    <section class="section section-neutral category-section">
+      <div class="container">
+        <h2 class="category-heading">{category}</h2>
+        <div class="grid grid-2">
+          {items.map((s) => (
+            <div class="card service-card">
+              <div class="icon-circle">{s.icon || s.title.charAt(0)}</div>
+              <h3>{s.title}</h3>
+              <p set:html={s.description} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  ))}
 </BaseLayout>
 
 <style>
@@ -41,6 +65,24 @@ const services = await getServices().catch(() => []);
     color: rgba(43, 43, 43, 0.7);
     max-width: 40rem;
     margin: 1.25rem auto 0;
+  }
+  .category-section + .category-section {
+    padding-top: 0;
+  }
+  .category-heading {
+    color: var(--em-red);
+    margin-bottom: 1.5rem;
+  }
+  .photo-bleed {
+    width: 100%;
+    height: clamp(220px, 32vw, 420px);
+    overflow: hidden;
+  }
+  .photo-bleed img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .grid {
     display: grid;

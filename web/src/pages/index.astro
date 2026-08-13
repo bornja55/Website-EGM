@@ -25,6 +25,17 @@ const [services, promotions, testimonials] = await Promise.all([
     <div class="hero-decor hero-decor-2" aria-hidden="true"></div>
   </section>
 
+  {/* Real photo — from the business's own Facebook photo export
+      (FB raw/Export_1786443238_452bc550/image_062.jpg, 22 Jun 2026), not a
+      stock/AI placeholder. A genuine moment (kid laughing over alphabet
+      tiles) reads better as the general homepage hero than the
+      workshop-specific shots, which are used on the Workshops page instead.
+      Full-bleed per DESIGN.md's "photography as the visual centerpiece"
+      direction. */}
+  <section class="photo-bleed">
+    <img src="/images/classroom.jpg" alt="นักเรียนตัวน้อยยิ้มระหว่างเรียนคำศัพท์ภาษาอังกฤษกับ English Mania" loading="lazy" />
+  </section>
+
   {promotions.length > 0 && (
     <section class="section">
       <div class="container">
@@ -80,7 +91,7 @@ const [services, promotions, testimonials] = await Promise.all([
       <div class="container">
         <div class="section-header">
           <h2>เสียงจากผู้ปกครองและนักเรียน</h2>
-          <p>ความสำเร็จของนักเรียนคือความภาคภูมิใจของเรา</p>
+          <p>รีวิวจริงจาก Google และ Facebook</p>
         </div>
         <div class="grid grid-3">
           {testimonials.map((t) => (
@@ -91,7 +102,11 @@ const [services, promotions, testimonials] = await Promise.all([
                 <div class="avatar-circle">{t.author_name.charAt(0)}</div>
                 <div>
                   <strong>{t.author_name}</strong>
-                  {t.source && <div class="testimonial-source">{t.source}</div>}
+                  {t.source && (
+                    <div class="testimonial-source">
+                      {t.source === "google" ? "Google Review" : t.source === "facebook" ? "Facebook Review" : t.source}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -141,6 +156,18 @@ const [services, promotions, testimonials] = await Promise.all([
     height: 12rem;
     bottom: 10%;
     right: 6%;
+  }
+
+  .photo-bleed {
+    width: 100%;
+    height: clamp(220px, 32vw, 420px);
+    overflow: hidden;
+  }
+  .photo-bleed img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
 
   .section-header {

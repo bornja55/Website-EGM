@@ -14,6 +14,7 @@ pocketbase/.credentials
 pocketbase/pb_data/
 pocketbase/pb_migrations/*.local.js
 pocketbase/pocketbase
+pocketbase/pocketbase.exe
 pocketbase/pb.zip
 
 # OS / editor

@@ -1,0 +1,101 @@
+---
+export const prerender = false;
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { getTutors } from "../lib/pocketbase";
+const tutors = await getTutors().catch(() => []);
+---
+
+<BaseLayout title="ทีมติวเตอร์">
+  <section class="section hero-text">
+    <div class="container">
+      <h1 class="hero-heading">ทีมติวเตอร์</h1>
+      <p class="hero-sub">ติวเตอร์ทุกคนคัดสรรจากวุฒิการศึกษาและประสบการณ์สอนจริง</p>
+    </div>
+  </section>
+
+  <section class="section section-neutral">
+    <div class="container">
+      <div class="grid grid-3">
+        {tutors.map((t) => (
+          <div class="card tutor-card">
+            {t.photo && <img class="tutor-photo" src={t.photo} alt={t.name} loading="lazy" />}
+            <h2>{t.name}</h2>
+            {t.education && <p class="tutor-education">{t.education}</p>}
+            {t.subjects && (
+              <div class="tutor-subjects">
+                {t.subjects.split(",").map((s) => (
+                  <span class="badge subject-badge">{s.trim()}</span>
+                ))}
+              </div>
+            )}
+            {t.credentials && <div class="tutor-credentials" set:html={t.credentials} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  /* New page (not from a Stitch mockup) — built to match the existing card
+     grid + color-token system from global.css / DESIGN.md, same pattern as
+     services.astro and workshops/index.astro. */
+  .hero-text {
+    text-align: center;
+    padding-bottom: 1.5rem;
+  }
+  .hero-sub {
+    color: rgba(43, 43, 43, 0.7);
+    margin-top: 0.75rem;
+  }
+  .grid {
+    display: grid;
+    gap: 2rem;
+  }
+  .grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+  .tutor-card {
+    text-align: center;
+  }
+  .tutor-photo {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1.25rem;
+    display: block;
+    box-shadow: var(--shadow);
+  }
+  .tutor-education {
+    color: rgba(43, 43, 43, 0.7);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+  .tutor-subjects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+    margin-top: 0.9rem;
+  }
+  .subject-badge {
+    background: var(--em-neutral-bg);
+    color: var(--em-ink);
+  }
+  .tutor-credentials {
+    text-align: left;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 0.88rem;
+    color: rgba(43, 43, 43, 0.8);
+  }
+  .tutor-credentials :global(ul) {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+  .tutor-credentials :global(li) {
+    margin-bottom: 0.35rem;
+  }
+</style>

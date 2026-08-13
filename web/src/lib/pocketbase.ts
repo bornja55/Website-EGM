@@ -20,6 +20,7 @@ async function pbFetch<T>(path: string): Promise<T> {
 
 export interface SiteSettings {
   phone: string;
+  email: string;
   line_oa_url: string;
   address: string;
   hours: string;
@@ -34,6 +35,7 @@ export interface Service {
   title: string;
   description: string;
   icon: string;
+  category: string;
   sort_order: number;
 }
 
@@ -72,6 +74,16 @@ export interface FaqItem {
   id: string;
   question: string;
   answer: string;
+  sort_order: number;
+}
+
+export interface Tutor {
+  id: string;
+  name: string;
+  photo: string;
+  education: string;
+  credentials: string;
+  subjects: string;
   sort_order: number;
 }
 
@@ -117,6 +129,13 @@ export async function getTestimonials(): Promise<Testimonial[]> {
 export async function getFaq(): Promise<FaqItem[]> {
   const res = await pbFetch<{ items: FaqItem[] }>(
     "collections/faq/records?sort=sort_order&perPage=50"
+  );
+  return res.items;
+}
+
+export async function getTutors(): Promise<Tutor[]> {
+  const res = await pbFetch<{ items: Tutor[] }>(
+    "collections/tutors/records?sort=sort_order&perPage=50"
   );
   return res.items;
 }

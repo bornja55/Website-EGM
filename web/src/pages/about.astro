@@ -10,10 +10,16 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <p class="hero-sub">ค่าเรียนเป็นมิตร ไม่คิดราคาศัตรูแน่นอน เพราะเราเข้าใจการเรียนภาษาต้องใช้เวลา
         เราจึงทำค่าเรียนให้เหมาะสม เพื่อส่งลูกมาได้จนสามารถประสบความสำเร็จในการสื่อสาร
         เรียนสนุก เข้าใจง่าย ตรงประเด็น เดินทางสะดวกด้วย MRT ตลาดบางใหญ่ ตรงข้ามเซ็นทรัลเวสเกต</p>
-      {/* TODO: real classroom photo goes here once available — see
-          design/DESIGN.md "full-bleed, high-quality photography" direction.
-          Deliberately not hotlinking Stitch's AI-generated placeholder image. */}
     </div>
+  </section>
+
+  {/* Real photo — from the business's own Facebook photo export
+      (FB raw/Export_1786443238_452bc550/image_062.jpg, 22 Jun 2026).
+      Full-bleed, no card frame, per DESIGN.md's "high-quality photography
+      sections... treated as the visual centerpiece" direction. Replaces the
+      earlier placeholder TODO. */}
+  <section class="photo-bleed">
+    <img src="/images/classroom.jpg" alt="นักเรียนตัวน้อยยิ้มระหว่างเรียนคำศัพท์ภาษาอังกฤษกับ English Mania" loading="lazy" />
   </section>
 
   <section class="section section-neutral">
@@ -39,6 +45,25 @@ import BaseLayout from "../layouts/BaseLayout.astro";
       <!-- TODO: content hasn't been refreshed in ~1 year, revise copy with the user before launch -->
     </div>
   </section>
+
+  {/* Real photo — professional headshot from
+      OneDrive/English Mania Ball/English mania x boat/center.jpg, matches
+      the same person in the business's FB promo flyers (yellow blazer,
+      glasses). Only claim made in copy is "founder" — directly supported by
+      the brand name itself ("English Mania by KruYam"), not invented bio
+      detail. */}
+  <section class="section">
+    <div class="container">
+      <div class="founder-card">
+        <img src="/images/kruyam-portrait.jpg" alt="ครูพี่แยม ผู้ก่อตั้ง English Mania" loading="lazy" />
+        <div class="founder-text">
+          <span class="badge">ผู้ก่อตั้ง</span>
+          <h2>ครูพี่แยม</h2>
+          <p>English Mania by KruYam</p>
+        </div>
+      </div>
+    </div>
+  </section>
 </BaseLayout>
 
 <style>
@@ -52,6 +77,17 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     margin: 1.25rem auto 0;
     color: rgba(43, 43, 43, 0.75);
     line-height: 1.8;
+  }
+  .photo-bleed {
+    width: 100%;
+    height: clamp(260px, 40vw, 480px);
+    overflow: hidden;
+  }
+  .photo-bleed img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .grid {
     display: grid;
@@ -75,5 +111,27 @@ import BaseLayout from "../layouts/BaseLayout.astro";
   .stat-label {
     font-size: 0.9rem;
     color: rgba(43, 43, 43, 0.7);
+  }
+  .founder-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+  .founder-card img {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: var(--shadow);
+  }
+  .founder-text h2 {
+    font-size: 2rem;
+    margin: 0.5rem 0 0.25rem;
+  }
+  .founder-text p {
+    color: rgba(43, 43, 43, 0.7);
+    margin: 0;
   }
 </style>

@@ -24,6 +24,12 @@ const settings = await getSiteSettings().catch(() => null);
             <strong>ที่อยู่</strong>
             <p>{settings?.address}</p>
           </div>
+          {settings?.email && (
+            <div class="info-row">
+              <strong>อีเมล</strong>
+              <p>{settings.email}</p>
+            </div>
+          )}
           {settings?.line_oa_url && (
             <a class="btn btn-line" href={settings.line_oa_url} target="_blank" rel="noopener">แชทผ่าน LINE</a>
           )}
