@@ -12,6 +12,33 @@ const PB_URL = process.env.POCKETBASE_URL || "http://127.0.0.1:8090"; // see not
 // at Docker build time.
 const TURNSTILE_SECRET_KEY = process.env.TURNSTILE_SECRET_KEY;
 
+// Retrofit per COURSE_PAGES_PRD.md CRITICAL #1: `contact_submissions.createRule`
+// is now superuser-only (migration 5), because a public createRule was
+// bypassable via a direct POST to PocketBase's own REST API regardless of what
+// this route checks. Same service-account auth pattern as
+// pocketbase/migrate-courses.mjs and the new api/reviews.ts. Re-authenticates
+// on every request rather than caching the token — this endpoint is low
+// traffic, and it avoids stale-token edge cases; revisit if traffic grows.
+const SUPERUSER_EMAIL = process.env.SUPERUSER_EMAIL;
+const SUPERUSER_PASS = process.env.SUPERUSER_PASS;
+
+async function authAsService(): Promise<string | null> {
+  if (!SUPERUSER_EMAIL || !SUPERUSER_PASS) {
+    console.error("SUPERUSER_EMAIL / SUPERUSE_PASS not set — cannot write to contact_submissions");
+    return null;
+  }
+  const res = await fetch(`${PB_URL}/api/collections/_superusers/auth-with-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ identity: SUPERUSER_EMAIL, password: SUPERUSER_PASS }),
+  });
+  if (!res.ok) {
+    console.error("service account auth failed", res.status, await res.text());
+    return null;
+  }
+  return (await res.json()).token;
+}
+
 async function verifyTurnstile(token: string | undefined, ip: string | undefined) {
   if (!TURNSTILE_SECRET_KEY) {
     // Not configured yet (e.g. local dev before you've created a Turnstile
@@ -55,9 +82,14 @@ export const POST: APIRoute = async ({ request, clientAddress }) => {
     return new Response(JSON.stringify({ error: "consent_required" }), { status: 400 });
   }
 
+  const serviceToken = await authAsService();
+  if (!serviceToken) {
+    return new Response(JSON.stringify({ error: "service_auth_failed" }), { status: 502 });
+  }
+
   const pbRes = await fetch(`${PB_URL}/api/collections/contact_submissions/records`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: serviceToken },
     body: JSON.stringify(body),
   });
 

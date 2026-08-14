@@ -1,0 +1,43 @@
+---
+export const prerender = false;
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CourseGrid from "../../components/CourseGrid.astro";
+import { getCourses, getActivePromotions, getActiveWorkshops } from "../../lib/pocketbase";
+import { buildCatalog } from "../../lib/catalog";
+
+// Everything the mega-menu offers has to be findable here — the menu lists
+// courses, promotions AND workshops, so a catalog showing only courses sent
+// people to a page missing what they had just been shown.
+const [courses, promotions, workshops] = await Promise.all([
+  getCourses().catch(() => []),
+  getActivePromotions().catch(() => []),
+  getActiveWorkshops().catch(() => []),
+]);
+const items = buildCatalog(promotions, courses, workshops);
+---
+
+<BaseLayout title="คอร์สเรียน" description="คอร์สเรียนภาษาอังกฤษ คณิตศาสตร์ วิทยาศาสตร์ โปรโมชั่น และเวิร์กช็อป จาก English Mania by KruYam">
+  <section class="section hero-text">
+    <div class="container">
+      <h1 class="hero-heading">คอร์สเรียน</h1>
+      <p class="hero-sub">คอร์ส โปรโมชั่น และเวิร์กช็อปที่เปิดรับสมัครตอนนี้ พร้อมราคาและตารางเรียน</p>
+    </div>
+  </section>
+
+  <section class="section section-neutral">
+    <div class="container">
+      <CourseGrid items={items} />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero-text {
+    text-align: center;
+    padding-bottom: 1.5rem;
+  }
+  .hero-sub {
+    color: rgba(43, 43, 43, 0.7);
+    margin-top: 0.75rem;
+  }
+</style>

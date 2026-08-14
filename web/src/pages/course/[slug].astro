@@ -1,0 +1,72 @@
+---
+export const prerender = false;
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProductTabs from "../../components/ProductTabs.astro";
+import {
+  getCourse,
+  getCourseSections,
+  getPinnedGalleryImages,
+  getTagMatchedGalleryImages,
+  getApprovedReviews,
+} from "../../lib/pocketbase";
+import { buildScheduleStats } from "../../lib/summaryStats";
+
+const { slug } = Astro.params;
+const course = slug ? await getCourse(slug).catch(() => null) : null;
+
+if (!course) {
+  return Astro.redirect("/course");
+}
+
+const [sections, pinnedImages, tagMatchedImages, reviews] = await Promise.all([
+  getCourseSections("course", course.id).catch(() => []),
+  getPinnedGalleryImages("course", course.id).catch(() => []),
+  getTagMatchedGalleryImages(course.tags || []).catch(() => []),
+  getApprovedReviews("course", course.id).catch(() => []),
+]);
+
+// "รูปแบบการเรียน" summary stat row (apple.com/macbook-air's "M5. The chip
+// that zips." pattern: headline, big visual, then a row of short stats).
+// Logic moved to lib/summaryStats.ts when this template was rolled out to
+// promotions and workshops, which need the same row.
+const summaryStats = buildScheduleStats(course);
+---
+
+<BaseLayout title={course.title} description={course.tagline || course.title}>
+  <section class="container product-hero-content">
+    <h1 class="product-heading">{course.title}</h1>
+    {course.tagline && <p class="product-tagline">{course.tagline}</p>}
+    <div class="product-meta">
+      {course.price != null && (
+        <span class="product-price">{course.price.toLocaleString()}<span>บาท</span></span>
+      )}
+      {course.duration && <span class="product-detail-pill">{course.duration}</span>}
+      {course.schedule && <span class="product-detail-pill">{course.schedule}</span>}
+    </div>
+    {course.line_link && (
+      <a class="btn btn-line" href={course.line_link} target="_blank" rel="noopener">จองผ่าน LINE</a>
+    )}
+  </section>
+
+  <section class="product-hero-media">
+    <img src={course.image || "/images/classroom.jpg"} alt={course.title} loading="eager" />
+  </section>
+
+  {course.description && (
+    <section class="section section-neutral">
+      <div class="container product-description" set:html={course.description} />
+    </section>
+  )}
+
+  <ProductTabs
+    sections={sections}
+    pinnedImages={pinnedImages}
+    tagMatchedImages={tagMatchedImages}
+    reviews={reviews}
+    lineLink={course.line_link}
+    summaryHeading="รูปแบบการเรียน"
+    summaryImage={course.image}
+    summaryStats={summaryStats}
+    summaryNote={course.summary_note}
+  />
+</BaseLayout>

@@ -1,0 +1,88 @@
+---
+export const prerender = false;
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ProductTabs from "../../components/ProductTabs.astro";
+import {
+  getPromotion,
+  getCourseSections,
+  getPinnedGalleryImages,
+  getTagMatchedGalleryImages,
+  getApprovedReviews,
+} from "../../lib/pocketbase";
+import { buildScheduleStats } from "../../lib/summaryStats";
+
+const { slug } = Astro.params;
+const promotion = slug ? await getPromotion(slug).catch(() => null) : null;
+
+if (!promotion) {
+  return Astro.redirect("/promotions");
+}
+
+const validUntilText = promotion.valid_until
+  ? new Date(promotion.valid_until).toLocaleDateString("th-TH", { year: "numeric", month: "long", day: "numeric" })
+  : null;
+
+const [sections, pinnedImages, tagMatchedImages, reviews] = await Promise.all([
+  getCourseSections("promotion", promotion.id).catch(() => []),
+  getPinnedGalleryImages("promotion", promotion.id).catch(() => []),
+  getTagMatchedGalleryImages(promotion.tags || []).catch(() => []),
+  getApprovedReviews("promotion", promotion.id).catch(() => []),
+]);
+
+// Same stat row as courses — a promotion is still sold as a recurring class,
+// it just has a valid_until on top. Wiring it (and lineLink) here closes the
+// gap flagged in HANDOFF.md, where only course/[slug].astro passed these.
+const summaryStats = buildScheduleStats(promotion);
+---
+
+<BaseLayout title={promotion.title} description={promotion.tagline || promotion.title}>
+  <section class="container product-hero-content">
+    <span class="badge">โปรโมชั่น</span>
+    <h1 class="product-heading">{promotion.title}</h1>
+    {promotion.tagline && <p class="product-tagline">{promotion.tagline}</p>}
+    <div class="product-meta">
+      {promotion.price != null && (
+        <span class="product-price">{promotion.price.toLocaleString()}<span>บาท</span></span>
+      )}
+      {promotion.duration && <span class="product-detail-pill">{promotion.duration}</span>}
+      {promotion.schedule && <span class="product-detail-pill">{promotion.schedule}</span>}
+    </div>
+    {validUntilText && <p class="valid-until">ใช้ได้ถึง {validUntilText}</p>}
+    {promotion.line_link && (
+      <a class="btn btn-line" href={promotion.line_link} target="_blank" rel="noopener">จองผ่าน LINE</a>
+    )}
+  </section>
+
+  <section class="product-hero-media">
+    <img src={promotion.image || "/images/classroom.jpg"} alt={promotion.title} loading="eager" />
+  </section>
+
+  {promotion.description && (
+    <section class="section section-neutral">
+      <div class="container product-description" set:html={promotion.description} />
+    </section>
+  )}
+
+  <ProductTabs
+    sections={sections}
+    pinnedImages={pinnedImages}
+    tagMatchedImages={tagMatchedImages}
+    reviews={reviews}
+    lineLink={promotion.line_link}
+    summaryHeading="รูปแบบการเรียน"
+    summaryImage={promotion.image}
+    summaryStats={summaryStats}
+    summaryNote={promotion.summary_note}
+  />
+</BaseLayout>
+
+<style>
+  .valid-until {
+    color: rgba(43, 43, 43, 0.65);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  .product-hero-content .badge {
+    margin-bottom: 1.25rem;
+  }
+</style>

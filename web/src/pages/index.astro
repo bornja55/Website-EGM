@@ -36,6 +36,12 @@ const [services, promotions, testimonials] = await Promise.all([
     <img src="/images/classroom.jpg" alt="นักเรียนตัวน้อยยิ้มระหว่างเรียนคำศัพท์ภาษาอังกฤษกับ English Mania" loading="lazy" />
   </section>
 
+  {/* Was a grid-3 card layout built for several promotions at once — after
+      moving the 9 real courses into their own `courses` collection (see
+      COURSE_PAGES_PRD.md), this section is realistically down to 1 active
+      promo most of the time, so it's a single centered callout instead of a
+      3-column grid with 2 empty slots. "ดูคอร์สทั้งหมด" keeps the homepage
+      pointing at the full course catalog, not just whatever promo is live. */}
   {promotions.length > 0 && (
     <section class="section">
       <div class="container">
@@ -43,12 +49,12 @@ const [services, promotions, testimonials] = await Promise.all([
           <h2>ข้อเสนอพิเศษ</h2>
           <p>โปรโมชั่นสุดคุ้มเพื่อพัฒนาทักษะภาษาอังกฤษของคุณ</p>
         </div>
-        <div class="grid grid-3">
-          {promotions.map((p) => (
+        <div class="promo-single-wrap">
+          {promotions.slice(0, 1).map((p) => (
             <div class="card promo-card">
               <span class="badge">โปรโมชั่น</span>
-              <h3>{p.title}</h3>
-              <p>{p.description}</p>
+              <h3>{p.slug ? <a href={`/promotions/${p.slug}`}>{p.title}</a> : p.title}</h3>
+              <p>{p.tagline || p.description}</p>
               <div class="promo-footer">
                 {p.price && (
                   <div class="promo-price">
@@ -64,6 +70,7 @@ const [services, promotions, testimonials] = await Promise.all([
             </div>
           ))}
         </div>
+        <p class="see-all-courses"><a href="/course">ดูคอร์สทั้งหมด &rarr;</a></p>
       </div>
     </section>
   )}
@@ -191,6 +198,15 @@ const [services, promotions, testimonials] = await Promise.all([
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
+  .promo-single-wrap {
+    max-width: 32rem;
+    margin: 0 auto;
+  }
+  .see-all-courses {
+    text-align: center;
+    margin-top: 2rem;
+    font-weight: 600;
+  }
   .promo-card {
     display: flex;
     flex-direction: column;

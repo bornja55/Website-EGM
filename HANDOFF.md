@@ -1,165 +1,124 @@
-# Handoff: English Mania website — real content pass + team page (blocked on a PocketBase seed error)
+# Handoff: Apple-style redesign of course/promotion/workshop detail pages
 
 ## Status
-All 8 original pages were previously ported to Astro and building clean (see git history —
-that work is done and out of scope for this handoff). This session's work was a "replace
-placeholder content with real content" pass: real business data was pulled from the live old
-site, the business's Facebook Page, and two OneDrive asset folders, and wired into the code.
-That code work is complete and committed-ready, but **it has not been verified end-to-end** —
-the user's local PocketBase reseed is currently failing with generic 400 errors on every
-collection, and a 404 on the new `tutors` collection. This is the single open blocker.
+`/course/native-speaker` is the **approved reference page** — its เนื้อหา tab is signed off by
+Siraphob. The rendering layer now supports the whole template and is wired into all three page
+types (course / promotion / workshop). What remains is a **data** rollout to the other 13 items,
+plus the real copy for everything currently marked `[MOCKUP]`.
 
-## Goal
-User (Siraphob) is rebuilding englishmania.co.th (Thai tutoring business "English Mania by
-KruYam") in Astro + PocketBase. This session's specific ask, over several turns: stop using
-placeholder/mockup content and replace it with real, verifiable data — real address/contact
-info, real course catalog and prices, real testimonials, real photography, and (once real
-tutor profile data was discovered) a real team page. User explicitly refuses fabricated
-content — every claim added this session traces back to a named source (old live site, FB
-Page, or an OneDrive folder). User prefers concise, step-by-step, Thai-language replies.
+## The template (as approved on native-speaker)
+The เนื้อหา tab, top to bottom:
+
+| Section | Layout | Notes |
+| --- | --- | --- |
+| รูปแบบการเรียน | summary block | headline + big photo + stat row, derived from tags/schedule |
+| เหมาะกับใคร | plain centred block | |
+| เรียนอะไรบ้าง | **2-up photo card row** | card 1 = course copy, card 2 = books/documents |
+| ปัญหาที่คอร์สนี้ช่วยแก้ | plain centred block | image deliberately cleared |
+| จุดเด่นของ English Mania | **3-row accordion** | rows left, photo right, photo swaps per row |
+| ผลลัพธ์หลังเรียนจบ | **3-up text card row** | copy only, no images |
+
+Reference pages Siraphob matched against: apple.com/macbook-pro's "iPhone essentials." (card row),
+"Significant others." (accordion), "Our values lead the way." (text cards).
+
+## How the layouts work (read this before adding another one)
+`course_sections` gained a `layout` select (`card` / `accordion` / `text-card`) and a
+`group_heading` text field — migrations **6, 7, 8**. A widget is **N consecutive records sharing
+the same `layout`**; `group_heading` on the FIRST record is the big heading above the widget.
+No new collections, no parent/child relations. `ProductTabs.astro` collapses the flat section list
+into render groups in its frontmatter (`sectionGroups`), because Astro templates can't carry state
+across a `.map()`.
+
+Adding a 4th layout = widen the select's values in a new migration, add one entry to `GROUP_KIND`,
+one branch in the template, one CSS block. Do NOT branch on "does this record have an image" —
+that makes the page layout depend on an editor forgetting to attach a photo.
 
 ## What's done
-- **Real business data corrected in `pocketbase/seed.mjs`**:
-  - Fixed a wrong address (was "...บางบัวทอง...", real one is "...เขตบางใหญ่...", confirmed
-    from the old live site's `/contact` page).
-  - Added real email `englishmaniabkk@gmail.com` (new `site_settings.email` field).
-  - Expanded `services` from 4 generic delivery-mode rows to 17 real subject-catalog rows
-    grouped by category (ภาษาอังกฤษ/คณิตศาสตร์/วิทยาศาสตร์/อื่นๆ), sourced from the old
-    site's footer menu.
-  - Added 9 real named courses with real prices to `promotions` (sourced from the old site's
-    `/course` page).
-  - Added real detail to the one seeded `workshops` record (Insect Pinning Workshop): seat
-    count (10, from a promo flyer found in the FB photo export), and a **real next event date,
-    2026-08-22, which the user supplied directly in chat** — do not treat this as inferred.
-  - **Testimonials were replaced twice**: first with 3 "real named student achievements" (from
-    the old site's carousel, used because no review *text* could be found at the time), then
-    **replaced again with 5 real Google/Facebook review quotes** once an OneDrive folder with
-    actual review screenshots was found. The current seed data is the 5-review version — the
-    achievement-based version is superseded, not both.
-- **New `tutors` collection + `/team` page** — a real 9-person tutor roster (including the
-  founder) was found as designed profile-card graphics in OneDrive. Data (education,
-  credentials, subjects) was transcribed from those cards into `pocketbase/seed.mjs`. Photos
-  were cropped out of each card (fixed crop box `360x360+90+95` on the source 1040x1040
-  images — same template across all 9) and saved to `web/public/images/tutors/*.jpg`.
-- **Real photography wired into 3 pages** (Home, About, Services all had zero real photography
-  before): see "Files changed" below for exact files/sources.
-- **Fixed a real bug**: the site header was serving `logo2.png` (a blue/red variant) renamed to
-  `logo.png`, instead of the correct yellow-circle CI mark. Fixed by copying the correct source
-  file over.
-- **New PocketBase migrations** (`2_add_service_category_and_email.js`,
-  `3_add_tutors.js`) add the `services.category` field, `site_settings.email` field, and the
-  whole `tutors` collection. **These have not been confirmed to actually apply** — see Status.
+- **Component/CSS** (`web/src/components/ProductTabs.astro`): sticky tab bar + LINE CTA, summary
+  stat block, alternating photo/text story blocks, and the three new grouped layouts above.
+  Accordion JS keeps exactly one row open (clicking the open row does nothing — the picture beside
+  it would have nothing to show) and cross-fades the photos in one grid cell so the panel height
+  doesn't jump.
+- **`web/src/lib/summaryStats.ts`** (new): the stat-row logic, extracted out of
+  `course/[slug].astro` so promotions and workshops can share it. Workshops get a **different**
+  stat set (วันที่จัด / ระดับชั้น / วิชา / ที่นั่ง / ราคา) and empty cells are dropped rather than
+  shown as "-" — STEM Fun Lab has no date/price/seats and a row of four dashes reads as broken.
+- **`promotions/[slug].astro` and `workshops/[slug].astro`** now pass `lineLink` + summary props.
+  This closes the gap the previous handoff flagged. Verified live on both.
+- **Books card artwork**: `web/public/images/courses/books-english-mania.png` — English Mania's OWN
+  A4 cover (`A4 ปก อังกฤษ.pdf`) plus three real document samples, composed into a 4:3 flat-lay that
+  FILLS the frame. Publisher cover art for California/Oxford was rejected as a copyright risk on a
+  commercial page. All four subject covers converted to images in `D:\Web EnglishMania\Book + doc\`
+  (full-size) and `Book + doc\web-tiles\` (cover-only 4:3 tiles, NOT the flat-lay treatment).
+- **`CONTENT_TEMPLATE_STORY_SECTIONS.md`** updated to the new structure: heading 5 now asks for
+  3 question/answer pairs, heading 6 for 3 title/description pairs.
 
 ## What's next
-1. **Unblock the PocketBase reseed** (see below, this is the immediate next step).
-2. Once seeding succeeds, visually check all pages via `npm run dev`, especially: Home/About/
-   Services (new photo-bleed sections), Workshops (new cover image + real seat count/date),
-   `/team` (new page, not yet visually verified at all), Home testimonials section (new
-   Google/Facebook source labels).
-3. Commit + push. Nothing from this session has been committed yet.
-4. Optional, not yet asked for by user but flagged as available: ~20 more real reviews and 8
-   more student-achievement graphics exist unused in the OneDrive `รีวิว/` and `Congratulation/`
-   folders — could support a dedicated reviews page later. Also more course photos in `คอร์ส/`.
-5. Resume the original pre-launch checklist (GCP VM, GitHub Actions secrets, Turnstile, LINE
-   OA, DNS cutover, PDPA legal review) — untouched this session, still outstanding from before.
+1. **Run the rollout** — `node rollout-story-template.mjs --dry-run` first, then for real. It
+   converts the other 13 items and reports what it skipped. Not yet run at time of writing.
+2. **Two things the rollout deliberately does NOT do**, both by design, not oversight:
+   - **Books card only goes on ภาษาอังกฤษ-tagged items.** The card names California and Oxford for
+     ป.1-6 — untrue for ฟิสิกส์ / ญี่ปุ่น / TGAT / the workshops. Items without it keep
+     เรียนอะไรบ้าง as a plain block rather than becoming a lone card in a 2-up grid. To extend:
+     make the same flat-lay for คณิต/วิทย์ from `Book + doc`, copy into `web/public/images/courses/`,
+     add to `BOOKS_CARD_BY_SUBJECT` — and only if the copy is true for that subject.
+   - **Accordion is skipped for items with no tag-matched gallery photo.** An accordion with an
+     empty picture column looks broken. Fix by tagging photos in the Admin UI, then re-run.
+3. **Real copy.** This is the blocking item for anything commercial.
 
-### Debugging the seed failure (do this first)
-Latest `node seed.mjs` run produced: 404 "Missing or invalid collection context" for every
-`tutors` insert (collection doesn't exist yet — migration 3 never applied), and a generic 400
-"Failed to create record" with an **empty** `data` object for every other collection, including
-`testimonials` whose schema didn't even change this session. That last part is the confusing
-part — it means this probably isn't a simple "new field doesn't exist yet" issue, or at least
-not only that.
+## Content debt — read before pointing ads anywhere
+Every item already carries 3 `[MOCKUP]` sections from `seed-course-sections-mockup.mjs`, and the
+rollout splits two of them into 3 blocks each, so the site will hold **~100 mockup blocks**.
+Siraphob accepted this knowingly (2026-08-14: "update ไปเลยเพราะต้องกลับมาแก้เนื้อหาทั้งหมดอีกที").
 
-Most likely cause: the user's `pocketbase serve` process was never restarted after the new
-migration files were added, so it's still running the old (pre-this-session) schema in memory.
-Already asked the user to: stop the server, check for/delete `pb_data`, restart
-`pocketbase serve` and paste back the startup log (should show 3 migrations applying), then
-re-run `superuser upsert` + `node seed.mjs`. **That response hasn't arrived yet — check for it
-first before re-diagnosing from scratch.** If the restart alone doesn't fix it, the next
-diagnostic step suggested was: open the PocketBase Admin UI (`http://127.0.0.1:8090/_/`) and
-try creating one `services` record by hand, since the UI surfaces the actual per-field
-validation error instead of the SDK's generic empty-data message.
+Find them all: Admin UI → `course_sections` → body contains `MOCKUP`. Collect replacements with
+`CONTENT_TEMPLATE_STORY_SECTIONS.md` (already updated for the new 3+3 structure) from ครูแยม.
+**No page whose blocks still say `[MOCKUP]` should be used as a paid-ad landing page.**
 
-## Key decisions made
-- **Chose real customer reviews over the achievement-based testimonials** once real review text
-  was found — the achievement approach was a deliberate compromise for "I won't fabricate
-  testimonials" when no real review text was available; once real text turned up, it fully
-  replaced that compromise rather than supplementing it.
-- **Chose photos from the business's own Facebook Page/photo export and two OneDrive folders
-  over any stock/AI imagery** — matches this project's standing rule (see PRD.md / DESIGN.md)
-  of never inventing content that isn't real and sourced.
-- **Built `/team` as a genuinely new page**, not in the original 8-page scope — user explicitly
-  approved this scope addition when asked (see "How to resume" for the exact question asked/
-  answered, in case it needs re-confirming with a fresh reviewer).
-- **Left the Insect Pinning Workshop's `event_date` unset until the user supplied a real one**
-  rather than guessing — the photos found were from a session that had already happened
-  (25 July), and only after the user was asked did they supply 2026-08-22 as the real next date.
-- **Declined to unilaterally pursue a full "Apple.com-style" redesign** when the user first
-  asked for one — investigated first (found a real bug: wrong logo file), then scoped the ask
-  down to what DESIGN.md already called for (full-bleed real photography) rather than a full
-  visual overhaul, since DESIGN.md already documents an Apple-inspired direction from an earlier
-  session and a full redesign would conflict with PRD.md's explicit "no redesign" non-goal.
+## Key decisions (do not re-litigate without asking)
+- **Tabs stay.** Siraphob overruled removing the เนื้อหา/รูป/รีวิว tabs for a continuous scroll.
+- **Mockup on one item first**, then roll out. Followed for every layout this session.
+- **Placeholder copy is allowed ONLY with the `[MOCKUP — ต้องแก้เป็นข้อมูลจริง]` prefix.** This does
+  not extend to images: a duplicated or unrelated photo has nothing marking it as placeholder, so
+  it reads as a bug. When there was no books photo, the card shipped with no image rather than a
+  stand-in.
+- **Real photos only**, and only ones the school owns or has rights to. Facebook ad-graphics are
+  excluded from the gallery; third-party publisher artwork is excluded everywhere.
+- **A full-bleed-photo card with text overlaid was tried and rejected** (2026-08-14) — the
+  classroom photos are bright and busy, so the copy needed a scrim heavy enough to dull the photo.
+  Reverted to text-above / photo-below. Don't re-propose it without a darker, calmer photo set.
 
-## Files changed or created
-- `pocketbase/seed.mjs` — extensively rewritten, see "What's done" above. Read the whole file,
-  it's short enough — don't rely on this summary for exact field values.
-- `pocketbase/pb_migrations/2_add_service_category_and_email.js` — new.
-- `pocketbase/pb_migrations/3_add_tutors.js` — new.
-- `web/src/lib/pocketbase.ts` — added `email`/`category` to existing interfaces, added `Tutor`
-  interface + `getTutors()`.
-- `web/src/pages/team.astro` — new page.
-- `web/src/components/Header.astro` — added nav link to `/team`.
-- `web/src/pages/index.astro` — added a full-bleed photo section after the hero; testimonials
-  section subtitle and source-label rendering updated for real Google/Facebook reviews.
-- `web/src/pages/about.astro` — added a full-bleed photo section (replacing an old TODO
-  comment) and a new founder portrait section.
-- `web/src/pages/services.astro` — added a full-bleed photo section; also (from earlier in this
-  session) reworked to group service cards by `category`.
-- `web/public/images/logo.png` — replaced (was the wrong file, see bug fix above).
-- `web/public/images/classroom.jpg`, `services-tutoring.jpg`, `kruyam-portrait.jpg`,
-  `workshops/insect-pinning-specimen.jpg`, `workshops/insect-pinning-craft.jpg`,
-  `tutors/*.jpg` (9 files) — all new, all real photos. Exact source file for each is recorded
-  in `web/public/images/README.txt` — read that file, it's the authoritative source list.
+## Scripts (all idempotent, all run BY SIRAPHOB — PocketBase is on his machine)
+From `pocketbase/`, after loading credentials:
+```powershell
+Get-Content .credentials | Where-Object { $_ -match '=' -and $_ -notmatch '^#' } | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "Env:$k" $v }
+```
+| Script | Purpose | Run? |
+| --- | --- | --- |
+| `seed-gallery-images.mjs` | 18 real photos into `gallery_images` | done |
+| `seed-course-sections-mockup.mjs` | 3 mockup sections × 14 items | done |
+| `patch-native-speaker-section-images.mjs` | photos on story sections | done |
+| `remove-native-speaker-schedule-section.mjs` | drop redundant section | done |
+| `patch-native-speaker-learn-cards.mjs` | เรียนอะไรบ้าง → 2 cards | done |
+| `patch-native-speaker-highlight-accordion.mjs` | จุดเด่น → accordion | done |
+| `patch-native-speaker-outcome-cards.mjs` | ผลลัพธ์ → 3 text cards | done |
+| `clear-native-speaker-problem-image.mjs` | centre the ปัญหา block | done |
+| `rollout-story-template.mjs` | **the other 13 items** | **NOT YET** |
 
 ## Context the next agent needs
-- **Three extra folders were connected mid-session via `request_cowork_directory`** beyond the
-  original `D:\Web EnglishMania\` mount:
-  `C:\Users\siraphob.a\OneDrive\English Mania Ball\English mania x boat\` (founder portrait,
-  a signage design file) and `C:\Users\siraphob.a\OneDrive\English Mania Ball\Web\` (the big
-  one — tutor profiles, review screenshots, achievement graphics, course photos). If a fresh
-  session doesn't have these mounted, it will need to request them again before any of the
-  "unused real assets" mentioned above are reachable.
-- **A separate `D:\Web EnglishMania\FB raw\Export_1786443238_452bc550\` folder** holds 1137
-  photos exported from the FB Page directly (2018-2026 by file date). Already mined for a few
-  good photos (see README.txt in images folder); not exhaustively reviewed — a subagent sampled
-  ~45 of them and reported a shortlist, most of which is still unused.
-- **Read tool quirk**: fails with a generic `EUNKNOWN` error on some pure-Thai filenames (no
-  Latin characters mixed in) inside the OneDrive folders, even though the files are completely
-  fine — confirmed via `file` and `cp` in bash. Workaround used throughout this session: `cp`
-  the file to an ASCII filename first (bash has no trouble with the Thai paths), then `Read`
-  the copy.
-- **PocketBase has never been successfully booted+seeded from inside this sandbox** — the
-  sandbox can't reach the PocketBase binary download or the user's local `127.0.0.1:8090`. All
-  seeding/build verification for this whole project has always had to happen in the user's own
-  PowerShell. This session's blocker (see "What's next") is happening on the user's machine, not
-  observable directly by the agent — rely on the user pasting back terminal output.
-- **The user's local PocketBase superuser credentials used in this session**:
-  email `siraphob.an@gmail.com`, password `P@ssw0rd` (as typed by the user in chat — a
-  throwaway local-dev password, not a secret worth protecting, but note it's not from
-  `.credentials`/`.env.example`, it's whatever the user actually typed when running
-  `superuser upsert`).
-- **User's tone/workflow preferences** (consistent across a very long session): concise Thai
-  replies, step-by-step PowerShell instructions when something needs to run on their machine,
-  no unilateral large scope changes without asking first (see the AskUserQuestion calls used
-  before building `/team` and before replacing testimonials) — keep using that pattern for any
-  further scope-expanding discoveries in the OneDrive folders.
-
-## How to resume
-1. Check the conversation for whether the user already replied with the `pocketbase serve`
-   restart log / reseed result requested in the last message before this handoff was generated.
-   If not, that's the literal next question to ask.
-2. Once seeding succeeds, ask the user to run `npm run dev` and visually check `/`, `/about`,
-   `/services`, `/workshops`, and the new `/team` page — none of the new photo/team work has
-   been visually confirmed by anyone yet, only written and reasoned about.
-3. Then commit + push (nothing from this session is committed).
+- **PocketBase (127.0.0.1:8090) and the Astro dev server (localhost:4321) run on Siraphob's
+  machine, not reachable from the sandbox.** Every seed/patch script must be run by him. The
+  sandbox CAN read/write files under `D:\Web EnglishMania` and CAN screenshot the dev server via
+  the Chrome MCP.
+- `npm run build` / `astro check` **cannot run in the sandbox** — `node_modules` holds Windows
+  binaries. Verify changes by loading the page in Chrome instead.
+- **AskUserQuestion popups do not work reliably for this user** — ask clarifying questions as plain
+  chat text.
+- **Chrome MCP screenshots** are viewport-only. For a full-page shot: hide `.tabs-sticky-bar` with
+  `visibility:hidden` (NOT `display:none` or a `position` change — those reflow the full-bleed bar
+  and shift the whole page), scroll in steps of `innerHeight - 64`, trim ~24px off each slice's
+  bottom to drop Chrome's screen-share pill, and stitch with PIL.
+- The tag vocabulary lives in `pb_migrations/4_add_courses_and_split_fields.js` and
+  `5_add_story_content.js`, mirrored in `web/src/lib/summaryStats.ts`. Don't invent new values.
+- User preference: concise, direct, Thai first with English technical terms, step-by-step for
+  procedures.

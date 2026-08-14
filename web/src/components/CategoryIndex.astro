@@ -1,0 +1,80 @@
+---
+// Shared body of the four Phase 2 category index pages
+// (/course/subject|grade|exam|format/[tag]). The four routes exist as separate
+// files because the URL shape is part of the spec, but they differ only in
+// which TagGroup they pass in — so the lookup, the 404 decision, and the
+// heading all live here rather than four times over.
+import BaseLayout from "../layouts/BaseLayout.astro";
+import CourseGrid from "./CourseGrid.astro";
+import { getCoursesByTag } from "../lib/pocketbase";
+import { courseToItem } from "../lib/catalog";
+import { GROUP_LABELS, tagFromSlug, type TagGroup } from "../lib/courseTags";
+
+interface Props {
+  group: TagGroup;
+  slug: string | undefined;
+}
+
+const { group, slug } = Astro.props;
+
+// An unknown slug is a wrong URL, not an empty category: /course/grade/ป.9
+// should not render "no courses found", which would tell a visitor the
+// category exists but is empty and let search engines index endless bogus
+// pages. Redirecting is decided in the ROUTE file (a component can't return a
+// Response) — this just reports it via `unknownTag`.
+const tag = slug ? tagFromSlug(group, slug) : null;
+const courses = tag ? await getCoursesByTag(tag).catch(() => []) : [];
+---
+
+{tag && (
+  <BaseLayout
+    title={`คอร์ส${GROUP_LABELS[group]} ${tag}`}
+    description={`คอร์สเรียนของ English Mania by KruYam ในหมวด ${GROUP_LABELS[group]} ${tag}`}
+  >
+    <section class="section hero-text">
+      <div class="container">
+        <p class="eyebrow">{GROUP_LABELS[group]}</p>
+        <h1 class="hero-heading">{tag}</h1>
+        <p class="hero-sub">
+          {courses.length > 0
+            ? `${courses.length} คอร์สที่เปิดสอนตอนนี้`
+            : "ยังไม่มีคอร์สในหมวดนี้"}
+        </p>
+        <a class="back-link" href="/course">← ดูคอร์สทั้งหมด</a>
+      </div>
+    </section>
+
+    <section class="section section-neutral">
+      <div class="container">
+        <CourseGrid
+          items={courses.map(courseToItem)}
+          emptyText="ยังไม่มีคอร์สในหมวดนี้ที่เปิดสอนตอนนี้ ดูคอร์สทั้งหมดได้ที่หน้าคอร์สเรียน"
+        />
+      </div>
+    </section>
+  </BaseLayout>
+)}
+
+
+<style>
+  .hero-text {
+    text-align: center;
+    padding-bottom: 1.5rem;
+  }
+  .eyebrow {
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--em-red);
+    margin-bottom: 0.5rem;
+  }
+  .hero-sub {
+    color: rgba(43, 43, 43, 0.7);
+    margin-top: 0.75rem;
+  }
+  .back-link {
+    display: inline-block;
+    margin-top: 1.25rem;
+    font-weight: 600;
+  }
+</style>

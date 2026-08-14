@@ -1,0 +1,844 @@
+---
+// Shared "story" tabs for course/promotion/workshop detail pages — see
+// COURSE_PAGES_PRD.md "Phase 1.5". First client-side JS in this project
+// (deliberate, no lighter alternative fits 3 tabs per page without it).
+import type { CourseSection, GalleryImage, Review } from "../lib/pocketbase";
+
+interface SummaryStat {
+  label: string;
+  value: string;
+}
+
+interface Props {
+  sections: CourseSection[];
+  pinnedImages: GalleryImage[];
+  tagMatchedImages: GalleryImage[];
+  reviews: Review[];
+  lineLink?: string | null;
+  // "รูปแบบการเรียน" summary block at the top of the เนื้อหา tab — see
+  // apple.com/macbook-air's "M5. The chip that zips." (headline, big visual,
+  // stat row). Optional/all-or-nothing: only renders when a heading AND at
+  // least one stat are given, so promotion/workshop pages that haven't
+  // wired this up yet render exactly as before.
+  summaryHeading?: string | null;
+  summaryImage?: string | null;
+  summaryStats?: SummaryStat[];
+  // One line of footnote copy under the stat row (apple.com puts its
+  // conditions/asterisk text in exactly that position). Holds the conditions
+  // that a stat cell can't express — "หยุด/ลาไม่ตัดชั่วโมง ลงชดเชยได้ภายในเดือน"
+  // and the like, which used to live in the deleted "รูปแบบการเรียน" section.
+  summaryNote?: string | null;
+}
+
+const {
+  sections,
+  pinnedImages,
+  tagMatchedImages,
+  reviews,
+  lineLink,
+  summaryHeading,
+  summaryImage,
+  summaryStats,
+  summaryNote,
+} = Astro.props;
+const showSummary = Boolean(summaryHeading && summaryStats && summaryStats.length > 0);
+// Pinned first (curator-controlled sort_order), tag-matched fill-in after —
+// per PRD, never merged/re-sorted together.
+const galleryImages = [...pinnedImages, ...tagMatchedImages];
+
+// Collapse the flat section list into render groups. Consecutive records
+// sharing a non-empty `layout` become ONE widget — layout="card" gives
+// apple.com's "iPhone essentials." tile row, layout="accordion" gives its
+// "Significant others." panel; anything unflagged stays a normal full-width
+// story block. Done here rather than in the template because Astro templates
+// can't carry state across a .map().
+type SectionGroup =
+  | { kind: "single"; section: CourseSection; imageIndex: number }
+  | {
+      kind: "cards" | "accordion" | "textcards";
+      heading: string | null;
+      items: CourseSection[];
+    };
+
+const GROUP_KIND = {
+  card: "cards",
+  accordion: "accordion",
+  "text-card": "textcards",
+} as const;
+
+const sectionGroups: SectionGroup[] = [];
+// Counts only the photo-bearing full-width blocks, so the left/right
+// alternation stays correct no matter how many text-only or grouped widgets
+// sit between them.
+let imageIndex = 0;
+for (const s of sections) {
+  const kind = s.layout ? GROUP_KIND[s.layout] : undefined;
+  if (kind) {
+    const last = sectionGroups[sectionGroups.length - 1];
+    if (last && last.kind === kind) {
+      last.items.push(s);
+    } else {
+      sectionGroups.push({ kind, heading: s.group_heading || null, items: [s] });
+    }
+  } else {
+    sectionGroups.push({ kind: "single", section: s, imageIndex: s.image ? imageIndex++ : 0 });
+  }
+}
+---
+
+<section class="section product-tabs">
+  {/* Full-width sticky bar — apple.com/macbook-air keeps its section nav +
+      Buy button pinned to the viewport top while scrolling through the
+      story, always one click away from booking. Deliberately kept OUTSIDE
+      the .container below so its background can span the full viewport
+      width instead of just the 1100px content column. */}
+  <div class="tabs-sticky-bar">
+    <div class="container tabs-sticky-inner">
+      <div class="tabs-nav" role="tablist">
+        <button class="tab-btn is-active" data-tab="content" role="tab" aria-selected="true" type="button">เนื้อหา</button>
+        <button class="tab-btn" data-tab="gallery" role="tab" aria-selected="false" type="button">รูป</button>
+        <button class="tab-btn" data-tab="reviews" role="tab" aria-selected="false" type="button">รีวิว</button>
+      </div>
+      {lineLink && (
+        <a class="btn btn-line tabs-cta" href={lineLink} target="_blank" rel="noopener">จองผ่าน LINE</a>
+      )}
+    </div>
+  </div>
+
+  <div class="container tabs-panels">
+    <div class="tab-panel is-active" data-panel="content" role="tabpanel">
+      {showSummary && (
+        <div class="content-summary">
+          <h3 class="content-summary-heading">{summaryHeading}</h3>
+          {summaryImage && (
+            <div class="content-summary-media">
+              <img src={summaryImage} alt={summaryHeading || ""} loading="eager" />
+            </div>
+          )}
+          <div class="content-summary-stats">
+            {summaryStats!.map((stat) => (
+              <div class="stat">
+                <div class="stat-label">{stat.label}</div>
+                <div class="stat-value">{stat.value}</div>
+              </div>
+            ))}
+          </div>
+          {summaryNote && <p class="content-summary-note">{summaryNote}</p>}
+        </div>
+      )}
+      {sections.length > 0 ? (
+        <div class="section-list">
+          {sectionGroups.map((g) =>
+            g.kind === "textcards" ? (
+              // apple.com "Our values lead the way." — a heading over a row of
+              // compact copy-only cards. No image slot by design.
+              <div class="section-cards-group">
+                {g.heading && <h3 class="section-cards-heading">{g.heading}</h3>}
+                <div class="section-text-cards">
+                  {g.items.map((c) => (
+                    <div class="section-text-card">
+                      <h4>{c.heading}</h4>
+                      <div class="section-body" set:html={c.body} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : g.kind === "accordion" ? (
+              // apple.com "Significant others." — one grey panel, collapsible
+              // rows down the left, and a picture on the right that swaps to
+              // whichever row is open. First row starts open so the panel is
+              // never a column of closed rows next to an empty space.
+              <div class="section-cards-group">
+                {g.heading && <h3 class="section-cards-heading">{g.heading}</h3>}
+                <div class="accordion-panel">
+                  <div class="accordion-list">
+                    {g.items.map((it, i) => (
+                      <div class:list={["accordion-item", { "is-open": i === 0 }]}>
+                        <button
+                          type="button"
+                          class="accordion-trigger"
+                          aria-expanded={i === 0}
+                          data-acc-index={i}
+                        >
+                          <span>{it.heading}</span>
+                          <svg class="accordion-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                              d="M5 9l7 7 7-7"
+                              fill="none"
+                              stroke="currentColor"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </button>
+                        <div class="accordion-answer" hidden={i !== 0}>
+                          <div class="section-body" set:html={it.body} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div class="accordion-media">
+                    {g.items.map((it, i) =>
+                      it.image ? (
+                        <img
+                          class:list={["accordion-img", { "is-active": i === 0 }]}
+                          data-acc-index={i}
+                          src={it.image}
+                          alt={it.heading}
+                          loading="lazy"
+                        />
+                      ) : null
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : g.kind === "cards" ? (
+              // apple.com "iPhone essentials." pattern — a big section
+              // heading over a row of equal grey tiles, each with its own
+              // centred title + copy and a photo anchored to the tile's
+              // bottom edge.
+              <div class="section-cards-group">
+                {g.heading && <h3 class="section-cards-heading">{g.heading}</h3>}
+                <div class="section-cards">
+                  {g.items.map((c) => (
+                    <div class="section-card">
+                      <div class="section-card-text">
+                        <h4>{c.heading}</h4>
+                        <div class="section-body" set:html={c.body} />
+                      </div>
+                      {c.image && (
+                        <div class="section-card-media">
+                          <img src={c.image} alt={c.heading} loading="lazy" />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : g.section.image ? (
+              // apple.com/macbook-air "Save on MacBook Air" pattern — text
+              // beside a full photo, not stacked above/below it. Alternates
+              // sides per photo block so the tab doesn't read as the same
+              // block repeated N times.
+              <div
+                class:list={[
+                  "section-item",
+                  "has-image",
+                  { "is-reversed": g.imageIndex % 2 === 1 },
+                ]}
+              >
+                <div class="section-media">
+                  <img src={g.section.image} alt={g.section.heading} loading="lazy" />
+                </div>
+                <div class="section-text">
+                  <h3>{g.section.heading}</h3>
+                  <div class="section-body" set:html={g.section.body} />
+                </div>
+              </div>
+            ) : (
+              // No photo for this one — apple.com's own highlight cards mix
+              // text-only cards in with photo cards rather than forcing an
+              // image everywhere, so this stays a plain centered block.
+              <div class="section-item is-text-only">
+                <h3>{g.section.heading}</h3>
+                <div class="section-body" set:html={g.section.body} />
+              </div>
+            )
+          )}
+        </div>
+      ) : (
+        <p class="empty-state">ข้อมูลเพิ่มเติมกำลังจะมาเร็วๆ นี้</p>
+      )}
+    </div>
+
+    <div class="tab-panel" data-panel="gallery" role="tabpanel" hidden>
+      {galleryImages.length > 0 ? (
+        <div class="gallery-grid">
+          {galleryImages.map((img) => (
+            <figure class="gallery-item">
+              <img src={img.image} alt={img.caption || ""} loading="lazy" />
+              {img.caption && <figcaption>{img.caption}</figcaption>}
+            </figure>
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">ยังไม่มีรูปภาพสำหรับหัวข้อนี้</p>
+      )}
+    </div>
+
+    <div class="tab-panel" data-panel="reviews" role="tabpanel" hidden>
+      {reviews.length > 0 ? (
+        <div class="review-list">
+          {reviews.map((r) => (
+            <div class="review-item">
+              {r.rating != null && <div class="review-rating" aria-hidden="true">{"★".repeat(r.rating)}{"☆".repeat(Math.max(0, 5 - r.rating))}</div>}
+              <p class="review-quote">"{r.quote}"</p>
+              <p class="review-author">— {r.author_name}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p class="empty-state">ยังไม่มีรีวิวสำหรับหัวข้อนี้</p>
+      )}
+    </div>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLElement>(".product-tabs").forEach((root) => {
+    const buttons = root.querySelectorAll<HTMLButtonElement>(".tab-btn");
+    const panels = root.querySelectorAll<HTMLElement>(".tab-panel");
+    buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const target = btn.getAttribute("data-tab");
+        buttons.forEach((b) => {
+          const active = b === btn;
+          b.classList.toggle("is-active", active);
+          b.setAttribute("aria-selected", String(active));
+        });
+        panels.forEach((p) => {
+          const active = p.getAttribute("data-panel") === target;
+          p.classList.toggle("is-active", active);
+          p.hidden = !active;
+        });
+      });
+    });
+  });
+
+  // "Significant others." accordion: exactly one row open at a time, and the
+  // picture on the right follows it. Scoped per .accordion-panel so a page
+  // with several accordions doesn't cross-wire them.
+  document.querySelectorAll<HTMLElement>(".accordion-panel").forEach((panel) => {
+    const items = panel.querySelectorAll<HTMLElement>(".accordion-item");
+    const images = panel.querySelectorAll<HTMLElement>(".accordion-img");
+
+    panel.querySelectorAll<HTMLButtonElement>(".accordion-trigger").forEach((trigger) => {
+      trigger.addEventListener("click", () => {
+        const index = trigger.getAttribute("data-acc-index");
+        // Clicking the open row closes nothing — Apple's panel always keeps
+        // one row open, otherwise the picture beside it has nothing to show.
+        if (trigger.getAttribute("aria-expanded") === "true") return;
+
+        items.forEach((item) => {
+          const btn = item.querySelector<HTMLButtonElement>(".accordion-trigger");
+          const answer = item.querySelector<HTMLElement>(".accordion-answer");
+          const open = btn === trigger;
+          item.classList.toggle("is-open", open);
+          btn?.setAttribute("aria-expanded", String(open));
+          if (answer) answer.hidden = !open;
+        });
+        images.forEach((img) => {
+          img.classList.toggle("is-active", img.getAttribute("data-acc-index") === index);
+        });
+      });
+    });
+  });
+</script>
+
+<style>
+  /* Sticky nav + booking CTA — apple.com/macbook-air pattern: the section
+     nav and Buy button stay pinned to the viewport top while the story
+     scrolls underneath, so booking is always one tap away. Full-bleed
+     background (this element sits outside .container) with a hairline
+     bottom border so it reads as a distinct bar once it starts floating
+     over content, not just at rest. */
+  .tabs-sticky-bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(43, 43, 43, 0.1);
+  }
+  .tabs-sticky-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .tabs-panels {
+    padding-top: 3rem;
+  }
+  .tabs-nav {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .tabs-cta {
+    flex-shrink: 0;
+    padding: 0.55rem 1.25rem;
+    font-size: 0.9rem;
+  }
+  .tab-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: rgba(43, 43, 43, 0.55);
+    padding: 1.1rem 1.25rem;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+  }
+  .tab-btn.is-active {
+    color: var(--em-ink);
+    border-bottom-color: var(--em-red);
+  }
+  .tab-btn:hover {
+    color: var(--em-ink);
+  }
+  /* Text-heavy panels stay narrow/readable; the gallery panel uses the full
+     container width so the photo grid isn't squeezed into a text column.
+     Content is wider than reviews (1040 vs 720) — a side-by-side photo+text
+     block (added below) needs real room, a tight 720px column would crush
+     both halves down to nothing. */
+  .tab-panel[data-panel="content"] {
+    max-width: 1040px;
+    margin: 0 auto;
+  }
+  .tab-panel[data-panel="reviews"] {
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  /* "รูปแบบการเรียน" summary — apple.com/macbook-air's "M5. The chip that
+     zips." lead section: left-aligned headline, one big visual centered
+     below it, then a short stat row (dividers, not cards) underneath.
+     Sits above .section-list with its own bottom divider so it reads as
+     the lead/at-a-glance block, distinct from the story sections below. */
+  .content-summary {
+    padding-bottom: 4rem;
+    margin-bottom: 4rem;
+    border-bottom: 1px solid rgba(43, 43, 43, 0.08);
+  }
+  .content-summary-heading {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 2rem;
+  }
+  .content-summary-media {
+    margin-bottom: 2.5rem;
+  }
+  .content-summary-media img {
+    width: 100%;
+    max-height: 480px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    display: block;
+    background: var(--em-neutral-bg);
+  }
+  .content-summary-stats {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  /* Footnote under the stat row. Smaller and lighter than .stat-label on
+     purpose — it has to read as a qualifier ON the row above, not as a sixth
+     stat or a new paragraph. The hairline above ties it to the row; without it
+     the line floats between the stats and the story sections below and reads
+     as neither. */
+  .content-summary-note {
+    margin: 1.5rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(43, 43, 43, 0.08);
+    font-size: 0.85rem;
+    line-height: 1.65;
+    color: rgba(43, 43, 43, 0.55);
+    max-width: 70ch;
+  }
+  .stat {
+    flex: 1 1 0;
+    min-width: 130px;
+    padding: 0 1.5rem;
+    border-left: 1px solid rgba(43, 43, 43, 0.12);
+  }
+  .stat:first-child {
+    padding-left: 0;
+    border-left: none;
+  }
+  .stat-label {
+    font-size: 0.85rem;
+    color: rgba(43, 43, 43, 0.55);
+    margin-bottom: 0.4rem;
+  }
+  .stat-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.25;
+  }
+  @media (max-width: 640px) {
+    .content-summary-stats {
+      gap: 1.5rem 0;
+    }
+    .stat {
+      flex: 1 1 45%;
+      border-left: none;
+      padding-left: 0;
+      padding-right: 0;
+    }
+  }
+
+  /* Flat, borderless content blocks — apple.com feature sections are plain
+     headline+paragraph with generous spacing and a hairline divider, not
+     boxed cards. Was `.card` (white box + shadow + padding), which read
+     as 3 separate UI widgets instead of one continuous piece of copy. */
+  .section-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .section-item {
+    padding: 4rem 0;
+    border-bottom: 1px solid rgba(43, 43, 43, 0.08);
+  }
+  .section-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .section-item:first-child {
+    padding-top: 0;
+  }
+  /* Photo BESIDE the text, not stacked above it — apple.com/macbook-air's
+     "Save on MacBook Air" and "Apple at Work" blocks are always an
+     asymmetric split, and alternate which side the photo sits on from one
+     block to the next. A uniform "headline, then a photo under it" repeated
+     for every single section (the previous pass) is exactly what read as
+     stiff/samey — this is the actual fix for that complaint, not just a
+     bigger headline. */
+  .section-item.has-image {
+    display: flex;
+    align-items: center;
+    gap: 3.5rem;
+  }
+  .section-item.has-image.is-reversed {
+    flex-direction: row-reverse;
+  }
+  .section-media,
+  .section-text {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .section-media img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius);
+    display: block;
+  }
+  /* No photo for this section — a plain centered block, narrower than the
+     photo blocks so it doesn't stretch into an awkward full-width line of
+     text (apple.com mixes text-only highlight cards in the same way). */
+  .section-item.is-text-only {
+    max-width: 640px;
+    margin: 0 auto;
+    text-align: center;
+  }
+  /* Headline-scale heading, not a small subhead — this is the #1 reason the
+     tab read as "unchanged" after the first card-flattening pass: removing
+     the box/shadow did nothing if the heading itself was still 1.3rem
+     body-copy size. Apple's feature headlines are the loudest thing in the
+     section. */
+  .section-item h3 {
+    font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 1rem;
+  }
+  .section-body {
+    color: rgba(43, 43, 43, 0.8);
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+  @media (max-width: 760px) {
+    .section-item.has-image,
+    .section-item.has-image.is-reversed {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1.75rem;
+    }
+    .section-item.is-text-only {
+      max-width: none;
+      text-align: left;
+    }
+  }
+
+  /* apple.com "iPhone essentials." row — a section heading over equal grey
+     tiles. Deliberately the ONE boxed treatment in this tab: it earns the box
+     because two things are being compared side by side, whereas the story
+     blocks above are one continuous read (hence flat + hairline dividers). */
+  .section-cards-group {
+    padding: 4rem 0;
+    border-bottom: 1px solid rgba(43, 43, 43, 0.08);
+  }
+  .section-cards-group:first-child {
+    padding-top: 0;
+  }
+  .section-cards-group:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  /* Same scale as .section-item h3 so a card row and a story block read as
+     peers in the same outline, not two different heading levels. */
+  .section-cards-heading {
+    font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    margin: 0 0 1.75rem;
+  }
+  .section-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+  /* Column flex + the media block's margin-top:auto is what pins each photo
+     to the tile's bottom edge regardless of how much copy sits above it —
+     that's what keeps two unequal-length cards visually aligned.
+     (A full-bleed-photo-with-overlaid-text variant was tried and rejected:
+     the classroom shot is bright and busy, so the copy needed a scrim heavy
+     enough that it dulled the photo it was sitting on.) */
+  .section-card {
+    background: var(--em-neutral-bg);
+    border-radius: 20px;
+    padding: 2.75rem 2rem 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .section-card-text {
+    text-align: center;
+    max-width: 34ch;
+    margin: 0 auto;
+  }
+  /* Smaller than the first pass: at ~500px of card width a 1.65rem Thai
+     heading wrapped to two lines and broke in the wrong place ("...ครู Native
+     ใน / คลาสเดียว"). text-wrap: balance evens the two lines out when it does
+     still wrap. */
+  .section-card h4 {
+    font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.75rem;
+    text-wrap: balance;
+  }
+  .section-card .section-body {
+    font-size: 1rem;
+    line-height: 1.65;
+    text-wrap: pretty;
+  }
+  .section-card-media {
+    margin-top: auto;
+    padding-top: 2.5rem;
+  }
+  /* Full-bleed to the tile's left/right/bottom edges (the padding above is on
+     .section-card, cancelled here) — Apple's tiles never float the product
+     shot in a smaller inner box. Both cards use the identical 4/3 slot, so
+     the books image has to be a filled 4/3 composition too, not a portrait
+     cover floating on a background. */
+  .section-card-media img {
+    display: block;
+    width: calc(100% + 4rem);
+    margin: 0 -2rem;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+  @media (max-width: 760px) {
+    .section-cards {
+      grid-template-columns: 1fr;
+    }
+    .section-card {
+      padding: 2rem 1.5rem 0;
+    }
+    .section-card-media img {
+      width: calc(100% + 3rem);
+      margin: 0 -1.5rem;
+    }
+  }
+
+  /* apple.com "Our values lead the way." — compact copy-only cards. auto-fit
+     rather than a hard 3 columns so the row still looks deliberate with 2 or
+     4 cards; below ~2 fitting they collapse to one column on their own.
+     Left-aligned (the photo tiles above are centred) because these carry a
+     paragraph each, and centred paragraphs get hard to scan in a narrow
+     column. */
+  .section-text-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+  .section-text-card {
+    background: var(--em-neutral-bg);
+    border-radius: 20px;
+    padding: 2rem 1.75rem;
+  }
+  .section-text-card h4 {
+    font-size: clamp(1.15rem, 1.8vw, 1.4rem);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.75rem;
+    text-wrap: balance;
+  }
+  .section-text-card .section-body {
+    font-size: 0.98rem;
+    line-height: 1.7;
+    text-wrap: pretty;
+  }
+
+  /* apple.com "Significant others." panel — rows left, picture right. The
+     narrow text column is deliberate: these answers are short, and a wide
+     measure next to a big picture reads as two competing blocks. */
+  .accordion-panel {
+    background: var(--em-neutral-bg);
+    border-radius: 28px;
+    padding: 3rem 3rem 3rem 3.5rem;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 3rem;
+    align-items: center;
+  }
+  .accordion-item {
+    border-bottom: 1px solid rgba(43, 43, 43, 0.14);
+  }
+  .accordion-item:first-child .accordion-trigger {
+    padding-top: 0;
+  }
+  .accordion-item:last-child {
+    border-bottom: none;
+  }
+  /* Whole row is the hit target, not just the chevron. */
+  .accordion-trigger {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    background: none;
+    border: none;
+    padding: 1.35rem 0;
+    font: inherit;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--em-ink);
+    text-align: left;
+    cursor: pointer;
+  }
+  .accordion-chevron {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    margin-top: 0.15rem;
+    color: rgba(43, 43, 43, 0.55);
+    transition: transform 0.25s ease;
+  }
+  .accordion-item.is-open .accordion-chevron {
+    transform: rotate(180deg);
+  }
+  .accordion-answer {
+    padding-bottom: 1.5rem;
+  }
+  .accordion-answer .section-body {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+  /* Every picture is stacked in the same grid cell and cross-faded, so the
+     panel's height doesn't jump as rows are opened and closed. */
+  .accordion-media {
+    display: grid;
+    align-items: center;
+  }
+  .accordion-img {
+    grid-area: 1 / 1;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius);
+    display: block;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease;
+  }
+  .accordion-img.is-active {
+    opacity: 1;
+    visibility: visible;
+  }
+  @media (max-width: 760px) {
+    .accordion-panel {
+      grid-template-columns: 1fr;
+      padding: 2rem 1.5rem;
+      gap: 2rem;
+    }
+    /* Picture above the rows on mobile — Apple stacks it that way too, and a
+       full-width photo under three collapsed rows would be below the fold. */
+    .accordion-media {
+      order: -1;
+    }
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    max-width: none;
+  }
+  .gallery-item {
+    margin: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--em-neutral-bg);
+  }
+  .gallery-item img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+  .gallery-item figcaption {
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+    color: rgba(43, 43, 43, 0.65);
+  }
+
+  .review-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .review-item {
+    padding: 1.75rem 0;
+    border-bottom: 1px solid rgba(43, 43, 43, 0.08);
+  }
+  .review-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .review-item:first-child {
+    padding-top: 0;
+  }
+  .review-rating {
+    color: var(--em-yellow-dark);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  .review-quote {
+    font-style: italic;
+    margin: 0 0 0.5rem;
+  }
+  .review-author {
+    font-weight: 600;
+    margin: 0;
+    color: rgba(43, 43, 43, 0.7);
+  }
+
+  .empty-state {
+    text-align: center;
+    color: rgba(43, 43, 43, 0.55);
+    padding: 2rem 0;
+  }
+</style>

@@ -1,0 +1,15 @@
+---
+export const prerender = false;
+import CategoryIndex from "../../../components/CategoryIndex.astro";
+import { tagFromSlug } from "../../../lib/courseTags";
+
+const { tag } = Astro.params;
+
+// Unknown slug -> back to the full catalog rather than an "empty category"
+// page. Has to happen here: only a route file can return a Response.
+if (!tag || !tagFromSlug("exam", tag)) {
+  return Astro.redirect("/course");
+}
+---
+
+<CategoryIndex group="exam" slug={tag} />

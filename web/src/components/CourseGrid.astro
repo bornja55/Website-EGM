@@ -1,0 +1,128 @@
+---
+// The catalog card grid, shared by /course, the four category index pages, and
+// anywhere else that lists sellable items.
+//
+// Takes normalised CatalogItems (see lib/catalog.ts) rather than Course
+// records, so promotions and workshops can sit in the same grid as courses —
+// they carry different fields but the CARD only ever shows five of them.
+//
+// /workshops and /promotions still keep their own page-scoped grids: those
+// cards show fields this one doesn't (seats remaining, valid-until), and
+// folding them in would mean a prop per difference.
+import type { CatalogItem } from "../lib/catalog";
+
+interface Props {
+  items: CatalogItem[];
+  /** Shown instead of the grid when nothing matches. */
+  emptyText?: string;
+}
+
+const { items, emptyText = "ยังไม่มีคอร์สที่เปิดสอนตอนนี้ ติดตามได้ทาง Facebook" } = Astro.props;
+---
+
+{items.length === 0 ? (
+  <p class="empty-state">{emptyText}</p>
+) : (
+  <div class="grid grid-3">
+    {items.map((item) => (
+      <a class="card course-card" href={item.href}>
+        <div class="course-image">
+          <img src={item.image || "/images/classroom.jpg"} alt={item.title} loading="lazy" />
+          {item.badge && <span class="course-badge">{item.badge}</span>}
+        </div>
+        <div class="course-body">
+          <h2>{item.title}</h2>
+          {item.tagline && <p class="course-tagline">{item.tagline}</p>}
+          {item.price != null && (
+            <div class="course-price">{item.price.toLocaleString()}<span>บาท</span></div>
+          )}
+        </div>
+      </a>
+    ))}
+  </div>
+)}
+
+<style>
+  .empty-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: rgba(43, 43, 43, 0.6);
+  }
+  .grid {
+    display: grid;
+    gap: 2rem;
+  }
+  .grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  /* Flat, borderless tile — apple.com/mac product tiles have no box-shadow or
+     visible card boundary, just image + text on the section background with
+     spacing doing the separation. Overrides .card's shadow, which read as a
+     bordered "UI card" rather than a product tile. */
+  .course-card {
+    box-shadow: none;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: var(--em-ink);
+    transition: opacity 0.2s ease;
+  }
+  .course-card:hover {
+    opacity: 0.85;
+    text-decoration: none;
+  }
+  /* The 4/3 lives on the IMG, not on the wrapper.
+     It was on the wrapper with `img { height: 100% }` inside, which silently
+     failed for portrait source images: .course-image is a flex item in a
+     column flex container, so its automatic minimum size is content-based, the
+     img's percentage height had no definite parent height to resolve against,
+     and the img fell back to its intrinsic size — dragging the box to the
+     photo's own ratio. Measured live: "คอร์สสอบเข้า ม.1" (a 720x960 portrait)
+     rendered a 0.75-ratio 443px-tall box while every landscape card was 1.33
+     at 249px. Sizing the img itself has no such dependency. */
+  .course-image {
+    position: relative;
+    overflow: hidden;
+  }
+  .course-image img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+  /* Sits ON the photo rather than above the title: it labels what KIND of
+     thing this card is, and the eye reaches the image first. */
+  .course-badge {
+    position: absolute;
+    top: 0.85rem;
+    left: 0.85rem;
+    background: var(--em-red);
+    color: var(--em-white);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+  }
+  .course-body {
+    padding: 1.5rem;
+  }
+  .course-tagline {
+    color: rgba(43, 43, 43, 0.7);
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+  }
+  .course-price {
+    margin-top: 1rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--em-red);
+  }
+  .course-price span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--em-ink);
+    margin-left: 0.25rem;
+  }
+</style>

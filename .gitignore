@@ -12,6 +12,9 @@ pocketbase/.credentials
 
 # PocketBase runtime data + binary
 pocketbase/pb_data/
+# Snapshots taken before running a migration/patch script — same live data as
+# pb_data/, just a copy, so it does not belong in the repo either.
+pocketbase/pb_data_backup/
 pocketbase/pb_migrations/*.local.js
 pocketbase/pocketbase
 pocketbase/pocketbase.exe

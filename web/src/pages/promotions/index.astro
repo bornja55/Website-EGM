@@ -1,0 +1,113 @@
+---
+export const prerender = false;
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { getPromotions } from "../../lib/pocketbase";
+const promotions = await getPromotions().catch(() => []);
+---
+
+<BaseLayout title="โปรโมชั่น" description="โปรโมชั่นพิเศษจาก English Mania by KruYam">
+  <section class="section hero-text">
+    <div class="container">
+      <h1 class="hero-heading">โปรโมชั่น</h1>
+      <p class="hero-sub">ข้อเสนอพิเศษ ระยะเวลาจำกัด</p>
+    </div>
+  </section>
+
+  <section class="section section-neutral">
+    <div class="container">
+      {promotions.length === 0 && (
+        <p class="empty-state">ยังไม่มีโปรโมชั่นตอนนี้ ติดตามได้ทาง Facebook</p>
+      )}
+      <div class="grid grid-3">
+        {promotions.map((p) => (
+          <a class="card promo-card" href={`/promotions/${p.slug}`}>
+            <div class="promo-image">
+              <img src={p.image || "/images/classroom.jpg"} alt={p.title} loading="lazy" />
+            </div>
+            <div class="promo-body">
+              <span class="badge">โปรโมชั่น</span>
+              <h2>{p.title}</h2>
+              {p.tagline && <p class="promo-tagline">{p.tagline}</p>}
+              {p.price != null && (
+                <div class="promo-price">{p.price.toLocaleString()}<span>บาท</span></div>
+              )}
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero-text {
+    text-align: center;
+    padding-bottom: 1.5rem;
+  }
+  .hero-sub {
+    color: rgba(43, 43, 43, 0.7);
+    margin-top: 0.75rem;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: rgba(43, 43, 43, 0.6);
+  }
+  .grid {
+    display: grid;
+    gap: 2rem;
+  }
+  .grid-3 {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  .promo-card {
+    /* Flat, borderless tile — see course/index.astro for the reasoning
+       (apple.com/mac reference has no card shadow/border). */
+    box-shadow: none;
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: var(--em-ink);
+    transition: opacity 0.2s ease;
+  }
+  .promo-card:hover {
+    opacity: 0.85;
+    text-decoration: none;
+  }
+  /* 4/3 on the IMG, not the wrapper — same latent bug as CourseGrid.astro:
+     a portrait source photo would otherwise drag this box to its own ratio.
+     No promotion has a portrait image today, so this is prevention. */
+  .promo-image {
+    overflow: hidden;
+  }
+  .promo-image img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+  .promo-body {
+    padding: 1.5rem;
+  }
+  .promo-body h2 {
+    margin-top: 0.75rem;
+  }
+  .promo-tagline {
+    color: rgba(43, 43, 43, 0.7);
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+  }
+  .promo-price {
+    margin-top: 1rem;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--em-red);
+  }
+  .promo-price span {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--em-ink);
+    margin-left: 0.25rem;
+  }
+</style>

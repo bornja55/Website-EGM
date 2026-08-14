@@ -84,11 +84,17 @@ a:hover { text-decoration: underline; }
   background: var(--em-yellow);
 }
 
+/* Category/index-page headline — deliberately the BIGGEST text on the site
+   (bigger than .product-heading on detail pages), matching apple.com/mac's
+   pattern where the category page gets the most oversized treatment and
+   individual product pages are one notch down. Was clamp(2.25rem,5vw,3.5rem)
+   — smaller than the detail hero, backwards from the Apple reference. */
 .hero-heading {
-  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-size: clamp(2.75rem, 8vw, 6rem);
   font-weight: 800;
   text-align: center;
-  line-height: 1.15;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
 }
 
 .badge {
@@ -99,4 +105,82 @@ a:hover { text-decoration: underline; }
   padding: 0.25rem 0.75rem;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+/* Shared "product page" hero — used identically by course/promotion/workshop
+   detail pages (see COURSE_PAGES_PRD.md), kept here instead of duplicated
+   per page. Ordering deliberately mirrors apple.com/th/mac-studio's actual
+   hero pattern: giant centered headline + tagline + CTA FIRST, full-bleed
+   photo reveal SECOND (not photo-then-text) — first pass had this backwards
+   and read as a generic template hero instead of the Apple reference. No
+   scroll zoom, per the brief. Huge vertical whitespace throughout per
+   DESIGN.md's "96-160px between sections, not 24-48px" rule — first pass
+   used 3rem/2.5rem here, far short of that spec. */
+.product-hero-content {
+  text-align: center;
+  padding: clamp(4rem, 10vw, 7rem) 0 clamp(3rem, 6vw, 4.5rem);
+}
+.product-heading {
+  font-size: clamp(2.75rem, 7vw, 5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+.product-tagline {
+  font-size: 1.35rem;
+  color: rgba(43, 43, 43, 0.7);
+  max-width: 34rem;
+  margin: 1.5rem auto 0;
+}
+.product-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin: 2.75rem 0;
+}
+.product-price {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--em-red);
+}
+.product-price span {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--em-ink);
+  margin-left: 0.35rem;
+}
+.product-detail-pill {
+  background: var(--em-neutral-bg);
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.product-hero-media {
+  width: 100%;
+  height: clamp(360px, 55vw, 680px);
+  overflow: hidden;
+}
+.product-hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.product-description {
+  max-width: 42rem;
+  margin: 0 auto;
+  font-size: 1.05rem;
+}
+.product-description p {
+  margin-bottom: 1.25rem;
+}
+.product-description ul {
+  margin: 0 0 1.25rem;
+  padding-left: 1.25rem;
+}
+.product-description li {
+  margin-bottom: 0.5rem;
 }

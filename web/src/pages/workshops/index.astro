@@ -21,24 +21,24 @@ const workshops = await getActiveWorkshops().catch(() => []);
       <div class="grid grid-2">
         {workshops.map((w) => (
           <article class="card workshop-card">
-            {w.cover_image && (
+            <a href={`/workshops/${w.slug}`} class="workshop-link">
               <div class="workshop-image">
-                <img src={w.cover_image} alt={w.title} loading="lazy" />
+                <img src={w.cover_image || "/images/classroom.jpg"} alt={w.title} loading="lazy" />
                 {w.seats_total && <span class="badge seats-badge">ที่นั่งจำกัด {w.seats_total} ที่</span>}
               </div>
-            )}
-            <div class="workshop-body">
-              <h2>{w.title}</h2>
-              <p set:html={w.description} />
-              {w.event_date && (
-                <p class="workshop-meta">{new Date(w.event_date).toLocaleDateString("th-TH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
-              )}
-              <div class="workshop-footer">
-                {w.price != null && <span class="workshop-price">{w.price.toLocaleString()} บาท</span>}
-                {w.line_link && (
-                  <a class="btn btn-line" href={w.line_link} target="_blank" rel="noopener">จองผ่าน LINE</a>
+              <div class="workshop-body">
+                <h2>{w.title}</h2>
+                <p set:html={w.description} />
+                {w.event_date && (
+                  <p class="workshop-meta">{new Date(w.event_date).toLocaleDateString("th-TH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
                 )}
               </div>
+            </a>
+            <div class="workshop-footer">
+              {w.price != null && <span class="workshop-price">{w.price.toLocaleString()} บาท</span>}
+              {w.line_link && (
+                <a class="btn btn-line" href={w.line_link} target="_blank" rel="noopener">จองผ่าน LINE</a>
+              )}
             </div>
           </article>
         ))}
@@ -73,6 +73,9 @@ const workshops = await getActiveWorkshops().catch(() => []);
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
   .workshop-card {
+    /* Flat, borderless tile — see course/index.astro for the reasoning
+       (apple.com/mac reference has no card shadow/border). */
+    box-shadow: none;
     padding: 0;
     overflow: hidden;
     display: flex;
@@ -93,17 +96,24 @@ const workshops = await getActiveWorkshops().catch(() => []);
     top: 1rem;
     right: 1rem;
   }
+  .workshop-link {
+    color: inherit;
+    text-decoration: none;
+    display: block;
+  }
   .workshop-body {
     padding: 1.5rem;
+  }
+  .workshop-body h2 {
+    color: var(--em-ink);
   }
   .workshop-meta {
     color: rgba(43, 43, 43, 0.65);
     font-size: 0.9rem;
   }
   .workshop-footer {
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    margin-top: -0.5rem;
+    padding: 0 1.5rem 1.5rem;
     display: flex;
     align-items: center;
     justify-content: space-between;

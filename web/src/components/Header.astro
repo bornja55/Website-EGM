@@ -1,27 +1,497 @@
 ---
+// Phase 2 of COURSE_PAGES_PRD.md — "คอร์สเรียน" becomes an Apple-style
+// mega-menu, and the nav gets a real mobile pattern for the first time.
+//
+// Before this the header was a flat 8-link flex row with NO mobile handling at
+// all; the links simply overflowed on a phone. That is why the mobile question
+// was answered with a hamburger rather than "skip the mega-menu on mobile" —
+// the underlying problem was the nav, not the dropdown.
+//
+// "โปรโมชั่น" is new here too. /promotions and /promotions/[slug] existed but
+// NOTHING linked to them — the only route in was one card on the homepage,
+// which linked straight to the detail page and skipped the index entirely.
 import type { SiteSettings } from "../lib/pocketbase";
-interface Props { settings: SiteSettings | null }
+import { getCourses, getActiveWorkshops } from "../lib/pocketbase";
+import { buildMenuGroups } from "../lib/courseTags";
+
+interface Props {
+  settings: SiteSettings | null;
+}
 const { settings } = Astro.props;
+
+// The menu only lists tags at least one real course carries, so it can never
+// advertise an empty category. A group with nothing left is dropped whole.
+const [courses, workshops] = await Promise.all([
+  getCourses().catch(() => []),
+  getActiveWorkshops().catch(() => []),
+]);
+const menuGroups = buildMenuGroups(courses);
+
+// Nav order, left to right. "คอร์สเรียน" is rendered separately (it owns the
+// mega-menu) and slots in where MEGA_SLOT sits.
+//
+// ทีมติวเตอร์ and คำถามที่พบบ่อย moved under เกี่ยวกับเรา as a dropdown — they are
+// both "about the school" pages rather than things to buy, and the top row was
+// carrying nine items.
+const NAV_BEFORE_MEGA = [
+  { href: "/promotions", label: "โปรโมชั่น" },
+  { href: "/workshops", label: "เวิร์กช็อป" },
+];
+
+const NAV_AFTER_MEGA = [
+  { href: "/blog", label: "บทความ" },
+  {
+    href: "/about",
+    label: "เกี่ยวกับเรา",
+    children: [
+      { href: "/team", label: "ทีมติวเตอร์" },
+      { href: "/faq", label: "คำถามที่พบบ่อย" },
+      // /services is NOT in the requested order and has no other inbound link.
+      // Parked here rather than dropped so the page doesn't become orphaned the
+      // way /promotions was — see the note in the PR. Remove this line if the
+      // page is being retired.
+      { href: "/services", label: "บริการ" },
+    ],
+  },
+  { href: "/contact", label: "ติดต่อเรา" },
+];
 ---
 
-<header style="padding: 1rem 0; background: var(--em-white); border-bottom: 1px solid rgba(0,0,0,0.08);">
-  <div class="container" style="display:flex; align-items:center; justify-content:space-between;">
-    <a href="/" style="display:flex; align-items:center; gap:0.5rem; font-weight:800; font-size:1.25rem;">
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/">
       <img src="/images/logo.png" alt="English Mania by KruYam" height="40" />
     </a>
-    <nav style="display:flex; gap:1.5rem; font-weight:600;">
-      <a href="/services">คอร์สเรียน</a>
-      <a href="/workshops">เวิร์กช็อป</a>
-      <a href="/team">ทีมติวเตอร์</a>
-      <a href="/blog">บทความ</a>
-      <a href="/about">เกี่ยวกับเรา</a>
-      <a href="/faq">คำถามที่พบบ่อย</a>
-      <a href="/contact">ติดต่อเรา</a>
+
+    <!-- Desktop nav ------------------------------------------------------ -->
+    <nav class="nav-desktop">
+      {NAV_BEFORE_MEGA.map((l) => <a class="nav-link" href={l.href}>{l.label}</a>)}
+      <div class="has-mega">
+        <a class="nav-link mega-trigger" href="/course" aria-haspopup="true" aria-expanded="false">
+          คอร์สเรียน
+          <svg class="caret" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+        <div class="mega-panel">
+          <div class="container mega-inner">
+            {menuGroups.map((g) => (
+              // ชั้นปี is ~10 entries while the others are 2-4. Left as one
+              // list it sets the height of the entire panel and leaves every
+              // other column stranded in white space, so long lists wrap into
+              // sub-columns instead.
+              <div class:list={["mega-col", { "is-tall": g.tags.length > 6 }]}>
+                <p class="mega-col-title">{g.label}</p>
+                <ul>
+                  {g.tags.map((t) => (
+                    <li><a href={t.href}>{t.value}</a></li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            {workshops.length > 0 && (
+              /* Workshops link straight to their own detail pages — there are
+                 only two, so a filter page in between would be a list of one. */
+              <div class="mega-col">
+                <p class="mega-col-title">Workshop</p>
+                <ul>
+                  {workshops.map((w) => (
+                    <li><a href={`/workshops/${w.slug}`}>{w.title}</a></li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div class="mega-col mega-col-all">
+              <a class="mega-all-link" href="/course">ดูคอร์สทั้งหมด →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      {NAV_AFTER_MEGA.map((l) =>
+        l.children ? (
+          <div class="has-dropdown">
+            <a class="nav-link" href={l.href} aria-haspopup="true" aria-expanded="false">
+              {l.label}
+              <svg class="caret" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </a>
+            <div class="dropdown-panel">
+              {l.children.map((c) => <a href={c.href}>{c.label}</a>)}
+            </div>
+          </div>
+        ) : (
+          <a class="nav-link" href={l.href}>{l.label}</a>
+        )
+      )}
     </nav>
+
     {settings?.line_oa_url && (
-      <a class="btn btn-line" href={settings.line_oa_url} target="_blank" rel="noopener">
+      <a class="btn btn-line header-cta" href={settings.line_oa_url} target="_blank" rel="noopener">
         จองผ่าน LINE
       </a>
     )}
+
+    <button class="hamburger" type="button" aria-label="เปิดเมนู" aria-expanded="false" aria-controls="mobile-nav">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+
+  <!-- Mobile nav --------------------------------------------------------- -->
+  <div class="nav-mobile" id="mobile-nav" hidden>
+    <div class="container">
+      {NAV_BEFORE_MEGA.map((l) => <a class="m-link" href={l.href}>{l.label}</a>)}
+      <!-- Same mega-menu content, collapsed into an accordion — the pattern
+           already used in ProductTabs.astro's จุดเด่น panel. -->
+      <div class="m-group">
+        <button class="m-trigger" type="button" aria-expanded="false">
+          คอร์สเรียน
+          <svg class="caret" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+        <div class="m-panel" hidden>
+          {menuGroups.map((g) => (
+            <div class="m-col">
+              <p class="mega-col-title">{g.label}</p>
+              <ul>
+                {g.tags.map((t) => <li><a href={t.href}>{t.value}</a></li>)}
+              </ul>
+            </div>
+          ))}
+          {workshops.length > 0 && (
+            <div class="m-col">
+              <p class="mega-col-title">Workshop</p>
+              <ul>
+                {workshops.map((w) => <li><a href={`/workshops/${w.slug}`}>{w.title}</a></li>)}
+              </ul>
+            </div>
+          )}
+          <a class="mega-all-link" href="/course">ดูคอร์สทั้งหมด →</a>
+        </div>
+      </div>
+      {NAV_AFTER_MEGA.map((l) =>
+        l.children ? (
+          <div class="m-group">
+            <button class="m-trigger" type="button" aria-expanded="false">
+              {l.label}
+              <svg class="caret" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+            <div class="m-panel" hidden>
+              {/* The parent is a real page, so it needs its own row inside the
+                  panel — on desktop you can click the trigger, on mobile the
+                  trigger only expands. */}
+              <a class="m-sublink" href={l.href}>ภาพรวม{l.label}</a>
+              {l.children.map((c) => <a class="m-sublink" href={c.href}>{c.label}</a>)}
+            </div>
+          </div>
+        ) : (
+          <a class="m-link" href={l.href}>{l.label}</a>
+        )
+      )}
+      {settings?.line_oa_url && (
+        <a class="btn btn-line m-cta" href={settings.line_oa_url} target="_blank" rel="noopener">
+          จองผ่าน LINE
+        </a>
+      )}
+    </div>
   </div>
 </header>
+
+<script>
+  const header = document.querySelector<HTMLElement>(".site-header");
+  if (header) {
+    // --- desktop mega-menu ---------------------------------------------
+    // Hover opens it, but the trigger is still a real link to /course and
+    // responds to click/Enter — so keyboard and touch users are not left with
+    // a dead nav item they can never open.
+    const wrap = header.querySelector<HTMLElement>(".has-mega");
+    const trigger = header.querySelector<HTMLAnchorElement>(".mega-trigger");
+    if (wrap && trigger) {
+      const setOpen = (open: boolean) => {
+        wrap.classList.toggle("is-open", open);
+        trigger.setAttribute("aria-expanded", String(open));
+      };
+      wrap.addEventListener("mouseenter", () => setOpen(true));
+      wrap.addEventListener("mouseleave", () => setOpen(false));
+      trigger.addEventListener("click", (e) => {
+        // Fine-pointer devices already opened it on hover — let the click
+        // through to /course. On touch, the first tap opens the menu instead.
+        if (window.matchMedia("(hover: hover)").matches) return;
+        e.preventDefault();
+        setOpen(!wrap.classList.contains("is-open"));
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") setOpen(false);
+      });
+    }
+
+    // --- desktop "เกี่ยวกับเรา" dropdown ---------------------------------
+    // Same hover-plus-click contract as the mega-menu, so touch users can open
+    // it and the parent page stays reachable with a mouse.
+    header.querySelectorAll<HTMLElement>(".has-dropdown").forEach((wrap) => {
+      const link = wrap.querySelector<HTMLAnchorElement>(".nav-link");
+      const setOpen = (open: boolean) => {
+        wrap.classList.toggle("is-open", open);
+        link?.setAttribute("aria-expanded", String(open));
+      };
+      wrap.addEventListener("mouseenter", () => setOpen(true));
+      wrap.addEventListener("mouseleave", () => setOpen(false));
+      link?.addEventListener("click", (e) => {
+        if (window.matchMedia("(hover: hover)").matches) return;
+        e.preventDefault();
+        setOpen(!wrap.classList.contains("is-open"));
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") setOpen(false);
+      });
+    });
+
+    // --- mobile drawer ---------------------------------------------------
+    const burger = header.querySelector<HTMLButtonElement>(".hamburger");
+    const drawer = header.querySelector<HTMLElement>(".nav-mobile");
+    if (burger && drawer) {
+      burger.addEventListener("click", () => {
+        const open = drawer.hasAttribute("hidden");
+        drawer.toggleAttribute("hidden", !open);
+        burger.setAttribute("aria-expanded", String(open));
+        burger.classList.toggle("is-open", open);
+        // Stop the page scrolling behind an open full-height drawer.
+        document.body.style.overflow = open ? "hidden" : "";
+      });
+    }
+
+    // --- mobile accordion -------------------------------------------------
+    header.querySelectorAll<HTMLButtonElement>(".m-trigger").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const panel = btn.nextElementSibling as HTMLElement | null;
+        if (!panel) return;
+        const open = panel.hasAttribute("hidden");
+        panel.toggleAttribute("hidden", !open);
+        btn.setAttribute("aria-expanded", String(open));
+        btn.classList.toggle("is-open", open);
+      });
+    });
+  }
+</script>
+
+<style>
+  .site-header {
+    padding: 1rem 0;
+    background: var(--em-white);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    position: relative;
+  }
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: none;
+  }
+
+  .nav-desktop {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    font-weight: 600;
+  }
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+  }
+  .caret {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.2s ease;
+  }
+  .has-mega {
+    /* static, not relative — the panel is positioned against .site-header so
+       it can span the full window width like apple.com's, instead of being
+       trapped inside the width of the "คอร์สเรียน" link. */
+    position: static;
+  }
+  .has-mega.is-open .caret {
+    transform: rotate(180deg);
+  }
+
+  .mega-panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: var(--em-white);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+    /* Animated open, but removed from the tab order and the accessibility tree
+       while closed — a visually hidden menu that is still focusable is a
+       classic keyboard trap. */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 30;
+  }
+  .has-mega.is-open .mega-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+  }
+  .mega-inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.5rem 3rem;
+    padding: 2.5rem 0 3rem;
+  }
+  .mega-col {
+    min-width: 140px;
+  }
+  /* Multi-column rather than a fixed grid: the list stays one <ul> (so it is
+     still one list to a screen reader) and reflows to whatever fits. */
+  .mega-col.is-tall ul {
+    display: block;
+    columns: 3;
+    column-gap: 2rem;
+  }
+  .mega-col.is-tall li {
+    margin-bottom: 0.6rem;
+    break-inside: avoid;
+  }
+  .mega-col-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: rgba(43, 43, 43, 0.5);
+    margin: 0 0 0.9rem;
+  }
+  .mega-col ul,
+  .m-col ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .mega-col a,
+  .m-col a {
+    color: var(--em-ink);
+    font-weight: 600;
+  }
+  .mega-col a:hover {
+    color: var(--em-red);
+  }
+  .mega-col-all {
+    margin-left: auto;
+    align-self: flex-end;
+  }
+  .mega-all-link {
+    font-weight: 700;
+    color: var(--em-red);
+    white-space: nowrap;
+  }
+
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 44px; /* 44px is the minimum comfortable touch target */
+    height: 44px;
+    padding: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  .hamburger span {
+    display: block;
+    height: 2px;
+    width: 24px;
+    margin: 0 auto;
+    background: var(--em-ink);
+    border-radius: 2px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+  }
+  .hamburger.is-open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  .hamburger.is-open span:nth-child(2) {
+    opacity: 0;
+  }
+  .hamburger.is-open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .nav-mobile {
+    display: none;
+  }
+  .m-group {
+    border-bottom: 1px solid rgba(43, 43, 43, 0.1);
+  }
+  .m-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    background: none;
+    border: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--em-ink);
+    cursor: pointer;
+  }
+  .m-trigger.is-open .caret {
+    transform: rotate(180deg);
+  }
+  .m-panel {
+    padding: 0 0 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .m-link {
+    display: block;
+    padding: 1rem 0;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(43, 43, 43, 0.1);
+  }
+  .m-cta {
+    display: inline-block;
+    margin-top: 1.5rem;
+  }
+
+  /* The breakpoint is set by the nav itself: 9 links plus a logo and a CTA stop
+     fitting well before the usual 768px tablet line. */
+  @media (max-width: 1100px) {
+    .nav-desktop,
+    .header-cta {
+      display: none;
+    }
+    .hamburger {
+      display: flex;
+    }
+    .nav-mobile {
+      display: block;
+      padding: 0.5rem 0 2rem;
+      max-height: calc(100vh - 72px);
+      overflow-y: auto;
+    }
+    .nav-mobile[hidden] {
+      display: none;
+    }
+  }
+</style>

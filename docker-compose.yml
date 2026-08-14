@@ -39,3 +39,10 @@ services:
       - GOOGLE_SERVICE_ACCOUNT_JSON=${GOOGLE_SERVICE_ACCOUNT_JSON}
       - GMAIL_SENDER=${GMAIL_SENDER}
       - TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
+      # Service-account auth for api/contact.ts + api/reviews.ts, now that
+      # contact_submissions/reviews.createRule are superuser-only (migration
+      # 5, COURSE_PAGES_PRD.md CRITICAL #1) — same account `pb`'s own
+      # SUPERUSER_EMAIL/PASS above already provisions, just also given to the
+      # web container so the API routes can authenticate before writing.
+      - SUPERUSER_EMAIL=${SUPERUSER_EMAIL}
+      - SUPERUSER_PASS=${SUPERUSER_PASS}
