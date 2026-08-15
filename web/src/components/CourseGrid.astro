@@ -10,6 +10,7 @@
 // cards show fields this one doesn't (seats remaining, valid-until), and
 // folding them in would mean a prop per difference.
 import type { CatalogItem } from "../lib/catalog";
+import QuickViewModal from "./QuickViewModal.astro";
 
 interface Props {
   items: CatalogItem[];
@@ -23,12 +24,41 @@ const { items, emptyText = "ยังไม่มีคอร์สที่เ�
 {items.length === 0 ? (
   <p class="empty-state">{emptyText}</p>
 ) : (
+  // Bento grid — apple.com/us-edu/shop/smart-home/accessories reference
+  // (Siraphob). 3 columns, auto-flow "dense": a badged item spans 2 of the
+  // 3 columns (courses opt in via migration 10's `badge` field; promotions/
+  // workshops are always badged already, so they're always wide here — the
+  // same "make this stand out" intent that badge already carried). "dense"
+  // is what lets a normal 1-wide item further down the list backfill the
+  // gap a wide tile leaves when it doesn't fit the remaining row space,
+  // instead of leaving a hole — no manual row/column bookkeeping needed.
   <div class="grid grid-3">
     {items.map((item) => (
-      <a class="card course-card" href={item.href}>
+      <a
+        class:list={["card course-card", { "is-featured": item.badge }]}
+        href={item.href}
+        data-search={`${item.title} ${item.tagline || ""}`.toLowerCase()}
+        data-tags={(item.tags || []).join("|")}
+      >
         <div class="course-image">
           <img src={item.image || "/images/classroom.jpg"} alt={item.title} loading="lazy" />
           {item.badge && <span class="course-badge">{item.badge}</span>}
+          {/* Only on featured (2:1) tiles, per Siraphob — a real button now,
+              not decorative: opens the QuickViewModal popup (the real detail
+              page in an iframe) instead of following the card's own link
+              (see that component's script for the preventDefault/
+              stopPropagation that makes that work). */}
+          {item.badge && (
+            <button
+              type="button"
+              class="course-plus"
+              aria-label={`ดูตัวอย่าง ${item.title}`}
+              data-quickview-trigger
+              data-href={item.href}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
+            </button>
+          )}
         </div>
         <div class="course-body">
           <h2>{item.title}</h2>
@@ -42,6 +72,8 @@ const { items, emptyText = "ยังไม่มีคอร์สที่เ�
   </div>
 )}
 
+<QuickViewModal />
+
 <style>
   .empty-state {
     text-align: center;
@@ -52,8 +84,28 @@ const { items, emptyText = "ยังไม่มีคอร์สที่เ�
     display: grid;
     gap: 2rem;
   }
+  /* Fixed 3 columns (was auto-fit) + dense flow — the bento layout needs a
+     real column count to span 2 of, which auto-fit's implicit column
+     count doesn't give it. */
   .grid-3 {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-flow: dense;
+  }
+  @media (max-width: 900px) {
+    .grid-3 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    .grid-3 .course-card.is-featured {
+      grid-column: span 2;
+    }
+  }
+  @media (max-width: 560px) {
+    .grid-3 {
+      grid-template-columns: 1fr;
+    }
+    .grid-3 .course-card.is-featured {
+      grid-column: span 1;
+    }
   }
   /* Flat, borderless tile — apple.com/mac product tiles have no box-shadow or
      visible card boundary, just image + text on the section background with
@@ -71,6 +123,24 @@ const { items, emptyText = "ยังไม่มีคอร์สที่เ�
   .course-card:hover {
     opacity: 0.85;
     text-decoration: none;
+  }
+  .course-card.is-featured {
+    grid-column: span 2;
+  }
+  /* Toggled by course/index.astro's search+filter script — display:none
+     rather than visibility so hidden cards don't leave gaps in the grid. */
+  .course-card.is-hidden {
+    display: none;
+  }
+  /* Featured tile gets the wide-photo treatment the reference screenshot
+     uses (e.g. its "Ted Lasso" tile) instead of just stretching the normal
+     4/3 photo — a plain 4/3 image spread across 2 columns would look
+     stretched/empty rather than deliberately wide. */
+  .course-card.is-featured .course-image img {
+    aspect-ratio: 21 / 9;
+  }
+  .course-card.is-featured .course-body h2 {
+    font-size: 1.4rem;
   }
   /* The 4/3 lives on the IMG, not on the wrapper.
      It was on the wrapper with `img { height: 100% }` inside, which silently
@@ -104,6 +174,35 @@ const { items, emptyText = "ยังไม่มีคอร์สที่เ�
     letter-spacing: 0.02em;
     padding: 0.3rem 0.7rem;
     border-radius: 999px;
+  }
+  /* "+" quick-view trigger, apple.com tile pattern — featured tiles only
+     (see template). A real <button> now (was a decorative span), so it
+     needs its own reset — border/background/font aren't free on a button
+     the way they were on a span. */
+  .course-plus {
+    position: absolute;
+    bottom: 0.85rem;
+    right: 0.85rem;
+    z-index: 1;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--em-ink);
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .course-card:hover .course-plus {
+    background: var(--em-white);
+  }
+  .course-plus svg {
+    width: 16px;
+    height: 16px;
   }
   .course-body {
     padding: 1.5rem;

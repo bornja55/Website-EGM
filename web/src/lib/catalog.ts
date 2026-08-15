@@ -17,6 +17,12 @@ export interface CatalogItem {
   price: number | null;
   /** Corner label. Absent for plain courses — the unlabelled card is the norm. */
   badge?: string;
+  /** Subject/grade/exam/format tags — courses only. Promotion/workshop tags
+      exist in PocketBase too, but are a gallery-image matching pool (see
+      pocketbase.ts's migration 5 comment), not this same category vocabulary,
+      so they're deliberately left off here rather than mixed in. Drives the
+      /course search+filter bar (course/index.astro). */
+  tags?: string[];
 }
 
 export function courseToItem(c: Course): CatalogItem {
@@ -26,6 +32,11 @@ export function courseToItem(c: Course): CatalogItem {
     tagline: c.tagline,
     image: c.image,
     price: c.price ?? null,
+    // Migration 10 — opt-in, unlike promotion/workshop's hardcoded label
+    // below: most courses have none, and CourseGrid only widens a tile when
+    // this is truthy, so an un-flagged course renders exactly as before.
+    badge: c.badge || undefined,
+    tags: c.tags || [],
   };
 }
 

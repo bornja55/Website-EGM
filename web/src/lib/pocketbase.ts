@@ -54,6 +54,9 @@ export interface Workshop {
   tags: string[]; // added migration 5 — gallery tag-matching only, not mega-menu (courses-only there)
   // Migration 9 — one line of footnote copy under the summary stat row.
   summary_note?: string;
+  // Migration 10 — opt-in corner label, also the wide 2:1 tile trigger on
+  // /workshops (see CourseGrid.astro's own badge for the course-side twin).
+  badge?: string;
 }
 
 export interface Promotion {
@@ -93,6 +96,10 @@ export interface Course {
   line_link: string;
   // Migration 9 — one line of footnote copy under the summary stat row.
   summary_note?: string;
+  // Migration 10 — opt-in corner label ("ขายดี", "แนะนำ", ...). Presence of
+  // any value also makes this course a wide 2:1 tile in CourseGrid's bento
+  // layout, same as promotions/workshops already are.
+  badge?: string;
 }
 
 export interface Testimonial {
@@ -277,6 +284,7 @@ export interface GalleryImage {
   image: string;
   caption: string;
   sort_order: number;
+  tags: string[]; // added migration 5 — gallery tag-matching pool
 }
 
 // Item-specific pinned photos, explicit sort_order, rendered first.
@@ -293,14 +301,21 @@ export async function getPinnedGalleryImages(type: ItemType, id: string): Promis
 // (COURSE_PAGES_PRD.md): excludes ANY photo with a relation set on any of the
 // 3 fields, not just this item's own pinned photos — otherwise a photo pinned
 // to course A would leak onto course B's gallery via a shared tag.
+//
+// Tag matching happens in JS, not via a PocketBase `tags~"..."` filter — same
+// bug as getCoursesByTag: the filter parser mishandles "&" inside a quoted
+// value, so `tags~"TGAT & A-Level"` silently matches 0 rows. Any item carrying
+// that tag (e.g. the tgat-a-level course) would always get an empty photo
+// pool and fall back to a plain block for no visible reason. The relation-
+// exclusion clause has no special characters, so it stays server-side; only
+// the tag comparison moved to JS.
 export async function getTagMatchedGalleryImages(tags: string[]): Promise<GalleryImage[]> {
   if (tags.length === 0) return [];
-  const tagFilter = tags.map((t) => `tags~"${t}"`).join(" || ");
-  const filter = `course="" && promotion="" && workshop="" && (${tagFilter})`;
+  const filter = `course="" && promotion="" && workshop=""`;
   const res = await pbFetch<{ items: GalleryImage[] }>(
-    "collections/gallery_images/records?filter=" + encodeURIComponent(filter) + "&sort=sort_order&perPage=50"
+    "collections/gallery_images/records?filter=" + encodeURIComponent(filter) + "&sort=sort_order&perPage=200"
   );
-  return res.items;
+  return res.items.filter((g) => (g.tags || []).some((t) => tags.includes(t)));
 }
 
 export interface Review {

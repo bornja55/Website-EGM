@@ -1,0 +1,124 @@
+---
+// Shared "+" quick-view popup — used by CourseGrid.astro's featured (2:1)
+// tiles and workshops/index.astro's featured tiles. Siraphob: the "+" icon
+// only appears on the wide/featured cards, and clicking it should feel like
+// opening the real detail page — full content, not a trimmed-down summary —
+// except as a popup, with the address bar staying put.
+//
+// That's an <iframe> pointing at the card's real href, not a hand-built
+// summary card: the detail pages (ProductTabs' tabs, the gallery/review
+// carousels, the sticky booking bar) are real interactive documents with
+// their own scripts, and scripts inside HTML injected via innerHTML/fetch
+// don't execute — an iframe is a genuine document context, so all of that
+// keeps working inside the popup with no extra wiring here.
+//
+// One <dialog> per page, not one per card: any element anywhere on the page
+// with [data-quickview-trigger] + data-href opens it via event delegation
+// (see the script below), so this only needs to be rendered once even
+// though CourseGrid renders many cards.
+---
+
+<dialog id="quick-view-modal" class="quick-view-modal">
+  <button type="button" class="quick-view-close" aria-label="ปิด">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+  </button>
+  <iframe class="quick-view-frame" title="ตัวอย่างหน้ารายละเอียด"></iframe>
+</dialog>
+
+<script>
+  const modal = document.getElementById("quick-view-modal") as HTMLDialogElement | null;
+  if (modal) {
+    const frame = modal.querySelector("iframe") as HTMLIFrameElement;
+    const closeBtn = modal.querySelector(".quick-view-close");
+
+    const closeModal = () => {
+      modal.close();
+      // Stops the iframe's page (any playing media, running scripts) rather
+      // than leaving it loaded in the background once the popup is closed.
+      frame.src = "about:blank";
+    };
+
+    // Delegated — trigger buttons live inside CourseGrid/workshop cards
+    // rendered by other components, so this can't wire up listeners on each
+    // one individually from here.
+    document.addEventListener("click", (e) => {
+      const trigger = (e.target as HTMLElement)?.closest<HTMLElement>("[data-quickview-trigger]");
+      if (!trigger) return;
+      // The trigger sits inside the card's own <a> (the whole card is
+      // already a link to the real detail page) — without this, the click
+      // would both open the popup AND follow that link.
+      e.preventDefault();
+      e.stopPropagation();
+
+      frame.src = trigger.dataset.href || "about:blank";
+      modal.showModal();
+    });
+
+    closeBtn?.addEventListener("click", closeModal);
+    // Click on the backdrop (outside the dialog's own box) closes it — the
+    // dialog element itself covers the whole viewport once open, so a plain
+    // "did the click land inside my content box" rect check is what
+    // distinguishes a backdrop click from a click inside the iframe/card.
+    modal.addEventListener("click", (e) => {
+      const rect = modal.getBoundingClientRect();
+      const inside =
+        e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (!inside) closeModal();
+    });
+    // Esc/OS-level dialog dismissal (the <dialog> element's own "cancel"
+    // event) should also stop the iframe, not just close the box.
+    modal.addEventListener("cancel", () => {
+      frame.src = "about:blank";
+    });
+  }
+</script>
+
+<style>
+  .quick-view-modal {
+    border: none;
+    border-radius: 20px;
+    padding: 0;
+    width: min(1100px, 94vw);
+    height: min(85vh, 900px);
+    overflow: hidden;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.25);
+  }
+  .quick-view-modal::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+  .quick-view-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 1;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--em-ink);
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  .quick-view-close svg {
+    width: 18px;
+    height: 18px;
+  }
+  .quick-view-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    background: var(--em-white);
+  }
+  @media (max-width: 640px) {
+    .quick-view-modal {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+    }
+  }
+</style>

@@ -4,13 +4,15 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { getServices } from "../lib/pocketbase";
 const services = await getServices().catch(() => []);
 
-// Group by category (real subject catalog from the old site's footer menu:
-// ภาษาอังกฤษ / คณิตศาสตร์ / วิทยาศาสตร์ / อื่นๆ). Rows without a category
-// (or older seed data predating the category field) fall into "อื่นๆ" so
-// nothing silently disappears from the page.
+// Group by category. The categories are now KINDS OF SERVICE (ให้เช่าสถานที่ /
+// อบรมองค์กร / บริการอื่นๆ), not school subjects — this page covers the
+// non-teaching side of the business, and the subject/level rows it used to
+// carry moved to the คอร์สเรียน mega-menu and /course/subject|grade pages.
+// Rows without a category fall into "บริการอื่นๆ" so nothing silently
+// disappears from the page.
 const groups = new Map<string, typeof services>();
 for (const s of services) {
-  const key = s.category || "อื่นๆ";
+  const key = s.category || "บริการอื่นๆ";
   if (!groups.has(key)) groups.set(key, []);
   groups.get(key)!.push(s);
 }
@@ -20,7 +22,7 @@ for (const s of services) {
   <section class="section hero-text">
     <div class="container">
       <h1 class="hero-heading">บริการ</h1>
-      <p class="hero-sub">เลือกรูปแบบการเรียนที่เหมาะสมกับคุณที่สุด พร้อมสิ่งอำนวยความสะดวกครบครัน</p>
+      <p class="hero-sub">บริการอื่นๆ นอกเหนือจากคอร์สเรียน — ให้เช่าห้องประชุมและสถานที่จัดกิจกรรม จำหน่ายเอกสารติวสอบ รับแปลเอกสาร และอบรมองค์กร</p>
     </div>
   </section>
 
@@ -34,13 +36,54 @@ for (const s of services) {
     <img src="/images/services-tutoring.jpg" alt="นักเรียนกำลังเรียนภาษาอังกฤษด้วยแท็บเล็ตและหนังสือแบบฝึกหัด" loading="lazy" />
   </section>
 
+  <section class="section" style="padding-bottom: 0;">
+    <div class="container">
+      <div class="catalog-toolbar">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
+            <path d="M21 21l-4.3-4.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <input type="search" id="service-search" placeholder="ค้นหาบริการ..." aria-label="ค้นหาบริการ" />
+        </div>
+        {groups.size > 1 && (
+          <div class="filter-wrap">
+            <button type="button" id="filter-toggle" class="btn btn-outline filter-btn" aria-expanded="false" aria-controls="filter-panel">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+              </svg>
+              หมวดหมู่
+              <span class="filter-count" id="filter-count" hidden>0</span>
+            </button>
+            <div class="filter-panel" id="filter-panel" hidden>
+              <div class="filter-options">
+                {[...groups.keys()].map((category) => (
+                  <label class="filter-option">
+                    <input type="checkbox" name="service-category" value={category} />
+                    <span>{category}</span>
+                  </label>
+                ))}
+              </div>
+              <button type="button" id="filter-clear" class="filter-clear">ล้างตัวกรอง</button>
+            </div>
+          </div>
+        )}
+      </div>
+      <p class="catalog-empty" id="catalog-empty" hidden>ไม่พบบริการที่ตรงกับคำค้นหา ลองคำอื่นหรือล้างตัวกรอง</p>
+    </div>
+  </section>
+
   {[...groups.entries()].map(([category, items]) => (
-    <section class="section section-neutral category-section">
+    <section class="section section-neutral category-section" data-category={category}>
       <div class="container">
         <h2 class="category-heading">{category}</h2>
         <div class="grid grid-2">
           {items.map((s) => (
-            <div class="card service-card">
+            <div
+              class="card service-card"
+              data-search={`${s.title} ${s.description || ""}`.toLowerCase()}
+              data-category={category}
+            >
               <div class="icon-circle">{s.icon || s.title.charAt(0)}</div>
               <h3>{s.title}</h3>
               <p set:html={s.description} />
@@ -51,6 +94,69 @@ for (const s of services) {
     </section>
   ))}
 </BaseLayout>
+
+<script>
+  const searchInput = document.getElementById("service-search") as HTMLInputElement | null;
+  const filterToggle = document.getElementById("filter-toggle") as HTMLButtonElement | null;
+  const filterPanel = document.getElementById("filter-panel");
+  const filterClear = document.getElementById("filter-clear");
+  const filterCount = document.getElementById("filter-count");
+  const emptyState = document.getElementById("catalog-empty");
+  const cards = Array.from(document.querySelectorAll<HTMLElement>(".service-card"));
+  const sections = Array.from(document.querySelectorAll<HTMLElement>(".category-section"));
+  const checkboxes = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="service-category"]'));
+
+  filterToggle?.addEventListener("click", () => {
+    if (!filterPanel) return;
+    const open = filterPanel.hasAttribute("hidden");
+    filterPanel.toggleAttribute("hidden", !open);
+    filterToggle.setAttribute("aria-expanded", String(open));
+  });
+  document.addEventListener("click", (e) => {
+    if (!filterPanel || filterPanel.hidden || !filterToggle) return;
+    const wrap = filterToggle.closest(".filter-wrap");
+    if (wrap && !wrap.contains(e.target as Node)) {
+      filterPanel.hidden = true;
+      filterToggle.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  const applyFilters = () => {
+    const query = (searchInput?.value || "").trim().toLowerCase();
+    const selectedCategories = checkboxes.filter((cb) => cb.checked).map((cb) => cb.value);
+    if (filterCount) {
+      filterCount.textContent = String(selectedCategories.length);
+      filterCount.hidden = selectedCategories.length === 0;
+    }
+
+    let visibleCount = 0;
+    cards.forEach((card) => {
+      const searchText = card.getAttribute("data-search") || "";
+      const category = card.getAttribute("data-category") || "";
+      const matchesSearch = !query || searchText.includes(query);
+      const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(category);
+      const visible = matchesSearch && matchesCategory;
+      card.classList.toggle("is-hidden", !visible);
+      if (visible) visibleCount++;
+    });
+    // A category section with every card hidden shouldn't leave its heading
+    // floating over an empty grid.
+    sections.forEach((section) => {
+      const anyVisible = Array.from(section.querySelectorAll<HTMLElement>(".service-card")).some(
+        (c) => !c.classList.contains("is-hidden")
+      );
+      section.classList.toggle("is-hidden", !anyVisible);
+    });
+    if (emptyState) emptyState.hidden = visibleCount !== 0;
+  };
+
+  searchInput?.addEventListener("input", applyFilters);
+  checkboxes.forEach((cb) => cb.addEventListener("change", applyFilters));
+  filterClear?.addEventListener("click", () => {
+    checkboxes.forEach((cb) => (cb.checked = false));
+    applyFilters();
+  });
+</script>
 
 <style>
   /* Ported from design/generated_screens/คอร์สเรียน _ บริการ - English Mania
@@ -109,5 +215,131 @@ for (const s of services) {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--em-red);
+  }
+  .service-card.is-hidden {
+    display: none;
+  }
+  .category-section.is-hidden {
+    display: none;
+  }
+
+  /* Search + filter toolbar — same pattern/markup as course/index.astro's
+     catalog toolbar (Siraphob: search + filter on both /course and
+     /services), duplicated here rather than shared since these are two
+     separate Astro pages with their own scoped <style>. */
+  .catalog-toolbar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    flex: 1 1 260px;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .search-icon {
+    position: absolute;
+    left: 1rem;
+    width: 18px;
+    height: 18px;
+    color: rgba(43, 43, 43, 0.45);
+    pointer-events: none;
+  }
+  .search-box input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.75rem;
+    border-radius: 999px;
+    border: 1px solid rgba(43, 43, 43, 0.15);
+    background: var(--em-white);
+    font: inherit;
+    font-size: 0.98rem;
+  }
+  .search-box input:focus {
+    outline: none;
+    border-color: var(--em-red);
+  }
+  .filter-wrap {
+    position: relative;
+    flex: none;
+  }
+  .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    white-space: nowrap;
+  }
+  .filter-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+  .filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: var(--em-red);
+    color: var(--em-white);
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  .filter-panel {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 10;
+    width: min(280px, 84vw);
+    background: var(--em-white);
+    border: 1px solid rgba(43, 43, 43, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  /* Same [hidden]-vs-class-display specificity tie as course/index.astro. */
+  .filter-panel[hidden],
+  .filter-count[hidden] {
+    display: none;
+  }
+  .filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .filter-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    background: var(--em-neutral-bg);
+    font-size: 0.88rem;
+    cursor: pointer;
+  }
+  .filter-option input {
+    accent-color: var(--em-red);
+  }
+  .filter-clear {
+    align-self: flex-start;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--em-red);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .catalog-empty {
+    text-align: center;
+    padding: 2rem 0;
+    color: rgba(43, 43, 43, 0.6);
   }
 </style>

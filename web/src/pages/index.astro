@@ -1,71 +1,141 @@
 ---
 export const prerender = false;
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getServices, getActivePromotions, getTestimonials } from "../lib/pocketbase";
+import {
+  getActivePromotions,
+  getTestimonials,
+  getCourses,
+  getActiveWorkshops,
+  getSiteSettings,
+} from "../lib/pocketbase";
+import { buildCatalog } from "../lib/catalog";
+import type { CatalogItem } from "../lib/catalog";
+import { buildMenuGroups } from "../lib/courseTags";
 
-const [services, promotions, testimonials] = await Promise.all([
-  getServices().catch(() => []),
+const [promotions, testimonials, courses, workshops, settings] = await Promise.all([
   getActivePromotions().catch(() => []),
   getTestimonials().catch(() => []),
+  getCourses().catch(() => []),
+  getActiveWorkshops().catch(() => []),
+  getSiteSettings().catch(() => null),
 ]);
+
+// "คอร์สแนะนำ" — promotions + courses + workshops together, 3 columns x 2
+// rows (Siraphob: the separate promo banner + a 2-column course grid read as
+// cluttered next to apple.com/tv-home's plainer reference — dropped the
+// banner, folded the promo back into this grid, same as buildCatalog's own
+// promotions-first ordering).
+const featuredItems: CatalogItem[] = buildCatalog(promotions, courses, workshops).slice(0, 6);
+
+// "เลือกคอร์สตามวิชา" — reuses the mega-menu's own tag grouping (courseTags.ts)
+// so a subject with no real course never gets a tile, same reasoning as the
+// header menu.
+const subjectGroup = buildMenuGroups(courses).find((g) => g.group === "subject");
+// Representative photo per subject — not a claim about a specific course, just
+// a category tile image (like the header menu's own text-only columns, but
+// with art). คณิตศาสตร์ has no dedicated course photo yet, so it falls back to
+// the same classroom shot CourseGrid itself falls back to for any missing image.
+const SUBJECT_IMAGE: Record<string, string> = {
+  "ภาษาอังกฤษ": "/images/courses/english-foundation.jpg",
+  "วิทยาศาสตร์": "/images/courses/physics-sunday.jpg",
+  "ภาษาญี่ปุ่น": "/images/courses/japanese.jpg",
+};
+
+// "บริการอื่นๆ" — the three non-teaching services shown as flat tiles like
+// the course grid above rather than the icon-circle list /services still
+// uses. Curated here instead of read live from `services`: that collection's
+// re-categorisation (cleanup-services.mjs) hasn't been run yet, so these
+// exact rows may not exist there today — see HANDOFF.md. All three link to
+// /services for the full list once that migration lands.
+const otherServices: CatalogItem[] = [
+  {
+    href: "/services",
+    title: "จำหน่ายเอกสารและหนังสือติวสอบ",
+    tagline: "เอกสารและหนังสือติวสอบที่สถาบันเรียบเรียงเอง",
+    image: "/images/courses/books-english-mania.png",
+    price: null,
+  },
+  {
+    href: "/services",
+    title: "เช่าห้องเรียน / ห้องประชุม",
+    tagline: "ห้องเรียนคุณภาพสูง แอร์ กระดานอัจฉริยะ ให้เช่ารายชั่วโมง",
+    image: "/images/services-tutoring.jpg",
+    price: null,
+  },
+  {
+    href: "/services",
+    // Real row, real copy — seed.mjs's "แปลเอกสาร ราชการ/วิจัย/บทความ".
+    title: "แปลเอกสาร ราชการ / วิจัย / บทความ",
+    tagline: "บริการแปลเอกสารราชการ งานวิจัย และบทความ",
+    image: "/images/classroom.jpg",
+    price: null,
+  },
+];
 ---
 
 <BaseLayout title="หน้าแรก">
   {/* The one deliberate yellow accent moment on this page, per DESIGN.md —
       everywhere else uses white/neutral so this hero actually stands out
-      instead of being one of several yellow bands. Ported from the Stitch
-      homepage mockup: bigger hero, two soft decorative blurs, same copy. */}
+      instead of being one of several yellow bands. Two CTAs now, not one —
+      apple.com hero pattern pairs a primary action with a lighter "browse"
+      one (its own Learn more / Buy split). */}
   <section class="section-yellow hero">
-    <div class="container hero-content">
+    <div class="container-wide hero-content">
       <h1 class="hero-heading">English Mania by KruYam</h1>
       <p class="hero-sub">วิธีที่ดีที่สุดในการทำนายอนาคตก็คือ การสร้างมันขึ้นมาเอง</p>
-      <a class="btn" href="/contact">Booking Now</a>
+      <div class="hero-actions">
+        <a class="btn btn-outline" href="/course">ดูคอร์สทั้งหมด</a>
+        {settings?.line_oa_url && (
+          <a class="btn btn-line" href={settings.line_oa_url} target="_blank" rel="noopener">
+            จองผ่าน LINE
+          </a>
+        )}
+      </div>
     </div>
     <div class="hero-decor hero-decor-1" aria-hidden="true"></div>
     <div class="hero-decor hero-decor-2" aria-hidden="true"></div>
   </section>
 
-  {/* Real photo — from the business's own Facebook photo export
-      (FB raw/Export_1786443238_452bc550/image_062.jpg, 22 Jun 2026), not a
-      stock/AI placeholder. A genuine moment (kid laughing over alphabet
-      tiles) reads better as the general homepage hero than the
-      workshop-specific shots, which are used on the Workshops page instead.
-      Full-bleed per DESIGN.md's "photography as the visual centerpiece"
-      direction. */}
-  <section class="photo-bleed">
-    <img src="/images/classroom.jpg" alt="นักเรียนตัวน้อยยิ้มระหว่างเรียนคำศัพท์ภาษาอังกฤษกับ English Mania" loading="lazy" />
-  </section>
-
-  {/* Was a grid-3 card layout built for several promotions at once — after
-      moving the 9 real courses into their own `courses` collection (see
-      COURSE_PAGES_PRD.md), this section is realistically down to 1 active
-      promo most of the time, so it's a single centered callout instead of a
-      3-column grid with 2 empty slots. "ดูคอร์สทั้งหมด" keeps the homepage
-      pointing at the full course catalog, not just whatever promo is live. */}
-  {promotions.length > 0 && (
-    <section class="section">
-      <div class="container">
+  {/* คอร์สแนะนำ — promotions + courses + workshops together, 3 columns x 2
+      rows. The separate promo banner section was removed (Siraphob: too
+      cluttered next to apple.com/tv-home's plainer reference) — the
+      promotion now leads this grid instead, via buildCatalog's own
+      promotions-first ordering. Custom markup instead of CourseGrid because
+      CourseGrid's grid is auto-fit, not a fixed 3. */}
+  {featuredItems.length > 0 && (
+    <section class="section section-neutral">
+      <div class="container-wide">
         <div class="section-header">
-          <h2>ข้อเสนอพิเศษ</h2>
-          <p>โปรโมชั่นสุดคุ้มเพื่อพัฒนาทักษะภาษาอังกฤษของคุณ</p>
+          <h2>คอร์สแนะนำ</h2>
+          <p>คอร์สเรียนและโปรโมชั่นที่เปิดสอนอยู่ตอนนี้</p>
         </div>
-        <div class="promo-single-wrap">
-          {promotions.slice(0, 1).map((p) => (
-            <div class="card promo-card">
-              <span class="badge">โปรโมชั่น</span>
-              <h3>{p.slug ? <a href={`/promotions/${p.slug}`}>{p.title}</a> : p.title}</h3>
-              <p>{p.tagline || p.description}</p>
-              <div class="promo-footer">
-                {p.price && (
-                  <div class="promo-price">
-                    {p.price.toLocaleString()}<span>บาท</span>
+        {/* Text ABOVE the photo, photo bleeding to the card's bottom edge —
+            apple.com's own product-tile pattern (Siraphob's reference).
+            Was image-on-top/text-below; flipped per that screenshot. 3
+            columns x 2 rows against the 6-item cap above. */}
+        <div class="tile-grid tile-grid-3">
+          {featuredItems.map((item) => (
+            <div class="tile">
+              <div class="tile-text">
+                {item.badge && <span class="tile-badge">{item.badge}</span>}
+                <h3>{item.title}</h3>
+                {item.tagline && <p>{item.tagline}</p>}
+                {item.price != null && (
+                  <div class="tile-price">
+                    {item.price.toLocaleString()}<span>บาท</span>
                   </div>
                 )}
-                {p.line_link && (
-                  <a class="btn btn-line" href={p.line_link} target="_blank" rel="noopener">
-                    จองผ่าน LINE
-                  </a>
-                )}
+                <div class="tile-actions">
+                  {settings?.line_oa_url && (
+                    <a class="btn btn-line btn-sm" href={settings.line_oa_url} target="_blank" rel="noopener">
+                      จองผ่าน LINE
+                    </a>
+                  )}
+                  <a class="tile-link" href={item.href}>ดูรายละเอียด &rsaquo;</a>
+                </div>
+              </div>
+              <div class="tile-image">
+                <img src={item.image || "/images/classroom.jpg"} alt={item.title} loading="lazy" />
               </div>
             </div>
           ))}
@@ -75,18 +145,72 @@ const [services, promotions, testimonials] = await Promise.all([
     </section>
   )}
 
-  <section class="section section-neutral">
-    <div class="container">
-      <div class="section-header">
-        <h2>บริการของเรา</h2>
-        <p>รูปแบบการเรียนที่หลากหลาย ตอบโจทย์ทุกความต้องการ</p>
+  {/* เลือกคอร์สตามวิชา — apple.com's "which Mac is right for you" category
+      grid. Reuses the mega-menu's own grouping (courseTags.buildMenuGroups)
+      so this can never advertise a subject with zero real courses. 4-column
+      grid — matches apple.com/tv-home's own reference row exactly, and lines
+      up 1:1 with today's 4 real subjects (one clean row, no wrapping). */}
+  {subjectGroup && subjectGroup.tags.length > 0 && (
+    <section class="section">
+      <div class="container-wide">
+        <div class="section-header">
+          <h2>เลือกคอร์สตามวิชา</h2>
+          <p>ดูคอร์สทั้งหมดในแต่ละวิชา</p>
+        </div>
+        <div class="tile-grid tile-grid-4">
+          {subjectGroup.tags.map((t) => (
+            <div class="tile">
+              <div class="tile-text">
+                <h3>{t.value}</h3>
+                <div class="tile-actions">
+                  {settings?.line_oa_url && (
+                    <a class="btn btn-line btn-sm" href={settings.line_oa_url} target="_blank" rel="noopener">
+                      จองผ่าน LINE
+                    </a>
+                  )}
+                  <a class="tile-link" href={t.href}>ดูคอร์สทั้งหมด &rsaquo;</a>
+                </div>
+              </div>
+              <div class="tile-image">
+                <img src={SUBJECT_IMAGE[t.value] || "/images/classroom.jpg"} alt={t.value} loading="lazy" />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-      <div class="grid grid-4">
-        {services.map((s) => (
-          <div class="card service-card">
-            <div class="icon-circle">{s.icon || s.title.charAt(0)}</div>
-            <h3>{s.title}</h3>
-            <p set:html={s.description} />
+    </section>
+  )}
+
+  {/* บริการอื่นๆ — the school's non-teaching services, same .tile as the two
+      grids above (Siraphob: "อยากได้เป็นกล่องๆ เหมือนตัวอย่าง") — bypasses
+      CourseGrid here so all three homepage grids share one card style
+      instead of CourseGrid's own image-on-top layout. 3 columns x 1 row.
+      Full detail (rates, capacity, how to order) stays on /services — these
+      are a teaser pointing there. */}
+  <section class="section section-neutral">
+    <div class="container-wide">
+      <div class="section-header">
+        <h2>บริการอื่นๆ</h2>
+        <p>นอกเหนือจากคอร์สเรียน</p>
+      </div>
+      <div class="tile-grid tile-grid-3">
+        {otherServices.map((item) => (
+          <div class="tile">
+            <div class="tile-text">
+              <h3>{item.title}</h3>
+              {item.tagline && <p>{item.tagline}</p>}
+              <div class="tile-actions">
+                {settings?.line_oa_url && (
+                  <a class="btn btn-line btn-sm" href={settings.line_oa_url} target="_blank" rel="noopener">
+                    จองผ่าน LINE
+                  </a>
+                )}
+                <a class="tile-link" href={item.href}>ดูรายละเอียด &rsaquo;</a>
+              </div>
+            </div>
+            <div class="tile-image">
+              <img src={item.image || "/images/classroom.jpg"} alt={item.title} loading="lazy" />
+            </div>
           </div>
         ))}
       </div>
@@ -95,7 +219,7 @@ const [services, promotions, testimonials] = await Promise.all([
 
   {testimonials.length > 0 && (
     <section class="section">
-      <div class="container">
+      <div class="container-wide">
         <div class="section-header">
           <h2>เสียงจากผู้ปกครองและนักเรียน</h2>
           <p>รีวิวจริงจาก Google และ Facebook</p>
@@ -122,13 +246,38 @@ const [services, promotions, testimonials] = await Promise.all([
       </div>
     </section>
   )}
+
+  {/* Closing CTA band — apple.com's dark "let's talk" close before the
+      footer: one headline, one action, nothing else competing for attention. */}
+  {settings?.line_oa_url && (
+    <section class="closing-cta">
+      <div class="container-wide">
+        <h2>พร้อมเริ่มเรียนแล้วหรือยัง?</h2>
+        <p>ทักแชท LINE เพื่อสอบถามและจองคิวเรียนได้เลย</p>
+        <a class="btn btn-line" href={settings.line_oa_url} target="_blank" rel="noopener">
+          จองผ่าน LINE
+        </a>
+      </div>
+    </section>
+  )}
 </BaseLayout>
 
 <style>
   /* Page-specific layout only — colors/spacing/radius still come from the
      shared tokens in global.css (DESIGN.md's 7-color table), nothing new
-     invented here. Ported from design/generated_screens/English Mania
-     Homepage - Mobile-MOBILE.html, minus Tailwind + the invented blue. */
+     invented here. */
+
+  /* Full-width sections (via a local .full-bleed wrapper wider than
+     .container) and a bento "one giant tile" layout were both tried and
+     reverted — Siraphob: it read as cluttered, and the content ended up
+     wider than the header's own 1100px .container, so the page and the
+     header visually disagreed about where the edge of the site was. That
+     round settled on every section sharing Header.astro's own .container
+     (1100px) exactly.
+     Since then, Siraphob asked for more breathing room on the homepage
+     body specifically WITHOUT moving the header's logo/LINE button — so
+     every section below now uses global.css's .container-wide instead,
+     while Header.astro (and Footer.astro) keep the original .container. */
 
   .hero {
     position: relative;
@@ -144,6 +293,13 @@ const [services, promotions, testimonials] = await Promise.all([
     font-size: 1.25rem;
     max-width: 40rem;
     margin: 1.5rem auto 2rem;
+  }
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
   }
   .hero-decor {
     position: absolute;
@@ -165,26 +321,26 @@ const [services, promotions, testimonials] = await Promise.all([
     right: 6%;
   }
 
-  .photo-bleed {
-    width: 100%;
-    height: clamp(220px, 32vw, 420px);
-    overflow: hidden;
-  }
-  .photo-bleed img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
   .section-header {
     text-align: center;
-    max-width: 40rem;
+    max-width: 46rem;
     margin: 0 auto 3rem;
+  }
+  /* No global h2 style exists (global.css only styles .hero-heading), so
+     every section title was rendering at the browser default size — nowhere
+     near DESIGN.md's "very large and bold" heading rule, and nothing like
+     the reference screenshot. Same clamp family as .hero-heading, one size
+     down. */
+  .section-header h2 {
+    font-size: clamp(2.25rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
   }
   .section-header p {
     color: rgba(43, 43, 43, 0.7);
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
+    font-size: 1.1rem;
   }
 
   .grid {
@@ -198,56 +354,128 @@ const [services, promotions, testimonials] = await Promise.all([
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
-  .promo-single-wrap {
-    max-width: 32rem;
-    margin: 0 auto;
-  }
   .see-all-courses {
     text-align: center;
-    margin-top: 2rem;
+    margin-top: 2.5rem;
     font-weight: 600;
   }
-  .promo-card {
+
+  /* Plain fixed-column grid, inside the normal .container width — every
+     tile the same size, no single one blown up bigger than the rest.
+     .tile-grid-3/.tile-grid-4 only set the column count; everything else is
+     shared. Steps down 4 -> 2 -> 1 (not straight to 1) so a 4-item row
+     doesn't collapse into a single narrow column on a tablet-width screen. */
+  .tile-grid {
+    display: grid;
+    gap: 1.5rem;
+  }
+  .tile-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .tile-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  @media (max-width: 900px) {
+    .tile-grid-3,
+    .tile-grid-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  @media (max-width: 520px) {
+    .tile-grid-3,
+    .tile-grid-4 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Shared tile — used by all three homepage grids (คอร์สแนะนำ, เลือกคอร์ส
+     ตามวิชา, บริการอื่นๆ). Text ABOVE the photo, photo bleeding to the
+     card's bottom/side edges — apple.com's own product-tile pattern
+     (Siraphob's screenshot reference), not CourseGrid's image-on-top/
+     text-below layout. A real card now (white fill + hairline border, not
+     the borderless "product tile on the page background" CourseGrid uses)
+     since the photo no longer owns the whole tile.
+     A plain <div>, not <a> — each card now holds TWO separate links (a
+     LINE-booking button + a "ดูรายละเอียด" text link, mirroring apple.com's
+     Buy + Learn more pair), and a link can't nest inside a link. */
+  .tile {
     display: flex;
     flex-direction: column;
+    background: var(--em-white);
+    border: 1px solid rgba(43, 43, 43, 0.08);
+    border-radius: var(--radius);
+    overflow: hidden;
+    color: var(--em-ink);
+    text-align: center;
   }
-  .promo-footer {
-    margin-top: auto;
-    padding-top: 1.5rem;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
+  .tile-text {
+    padding: 2rem 1.5rem 1.25rem;
   }
-  .promo-price {
-    font-size: 1.5rem;
+  .tile-text h3 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+  .tile-text p {
+    color: rgba(43, 43, 43, 0.7);
+    font-size: 0.95rem;
+    margin-top: 0.5rem;
+  }
+  .tile-badge {
+    display: inline-block;
+    background: var(--em-red);
+    color: var(--em-white);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.3rem 0.7rem;
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
+  }
+  .tile-price {
+    margin-top: 0.75rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: var(--em-red);
   }
-  .promo-price span {
-    font-size: 1rem;
+  .tile-price span {
+    font-size: 0.9rem;
     font-weight: 600;
     color: var(--em-ink);
     margin-left: 0.25rem;
   }
-
-  .service-card {
-    text-align: center;
-  }
-  .icon-circle {
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 50%;
-    background: var(--em-white);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+  /* Buy + Learn more pair, apple.com's own card pattern. */
+  .tile-actions {
+    margin-top: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1.25rem;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--em-red);
+    gap: 1.1rem;
+    flex-wrap: wrap;
+  }
+  /* Smaller than the site's default .btn (used for full-size CTAs like the
+     hero) — this one has to sit comfortably next to a text link inside a
+     3-4 column card. */
+  .btn-sm {
+    padding: 0.5rem 1.1rem;
+    font-size: 0.9rem;
+  }
+  .tile-link {
+    font-weight: 600;
+    font-size: 0.95rem;
+    white-space: nowrap;
+  }
+  /* margin-top: auto pushes the photo to the bottom of the card even when a
+     sibling tile's text block is taller (grid rows stretch to equal height
+     by default) — aspect-ratio on the IMG itself (not a percentage height)
+     is what actually sizes it, so there's no repeat of the promo-split bug. */
+  .tile-image {
+    margin-top: auto;
+  }
+  .tile-image img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
   }
 
   .testimonial-card {
@@ -288,5 +516,22 @@ const [services, promotions, testimonials] = await Promise.all([
   .testimonial-source {
     font-size: 0.85rem;
     color: rgba(43, 43, 43, 0.6);
+  }
+
+  /* Closing CTA — dark band, apple.com's pre-footer "let's talk" pattern.
+     var(--em-ink) is already documented in DESIGN.md as a valid background
+     (it's the footer's own color), so this isn't a new token. */
+  .closing-cta {
+    background: var(--em-ink);
+    color: var(--em-white);
+    text-align: center;
+    padding: 6rem 0;
+  }
+  .closing-cta h2 {
+    color: var(--em-white);
+  }
+  .closing-cta p {
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0.75rem 0 2rem;
   }
 </style>

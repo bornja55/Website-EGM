@@ -254,13 +254,34 @@ for (const s of sections) {
 
     <div class="tab-panel" data-panel="gallery" role="tabpanel" hidden>
       {galleryImages.length > 0 ? (
-        <div class="gallery-grid">
-          {galleryImages.map((img) => (
-            <figure class="gallery-item">
-              <img src={img.image} alt={img.caption || ""} loading="lazy" />
-              {img.caption && <figcaption>{img.caption}</figcaption>}
-            </figure>
-          ))}
+        <div class="carousel gallery-carousel" data-carousel>
+          <div class="carousel-track" data-carousel-track>
+            {galleryImages.map((img) => (
+              <figure class="carousel-item gallery-item" data-carousel-item>
+                <img src={img.image} alt={img.caption || ""} loading="lazy" />
+                {img.caption && <figcaption>{img.caption}</figcaption>}
+              </figure>
+            ))}
+          </div>
+          {galleryImages.length > 1 && (
+            <div class="carousel-nav">
+              <button class="carousel-arrow" type="button" aria-label="รูปก่อนหน้า" data-carousel-prev>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="carousel-dots" role="tablist">
+                {galleryImages.map((_, i) => (
+                  <button class="carousel-dot" type="button" data-carousel-dot aria-label={`ไปที่รูปที่ ${i + 1}`} role="tab" aria-selected={i === 0}></button>
+                ))}
+              </div>
+              <button class="carousel-arrow" type="button" aria-label="รูปถัดไป" data-carousel-next>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         <p class="empty-state">ยังไม่มีรูปภาพสำหรับหัวข้อนี้</p>
@@ -269,14 +290,35 @@ for (const s of sections) {
 
     <div class="tab-panel" data-panel="reviews" role="tabpanel" hidden>
       {reviews.length > 0 ? (
-        <div class="review-list">
-          {reviews.map((r) => (
-            <div class="review-item">
-              {r.rating != null && <div class="review-rating" aria-hidden="true">{"★".repeat(r.rating)}{"☆".repeat(Math.max(0, 5 - r.rating))}</div>}
-              <p class="review-quote">"{r.quote}"</p>
-              <p class="review-author">— {r.author_name}</p>
+        <div class="carousel review-carousel" data-carousel>
+          <div class="carousel-track" data-carousel-track>
+            {reviews.map((r) => (
+              <div class="carousel-item review-item" data-carousel-item>
+                {r.rating != null && <div class="review-rating" aria-hidden="true">{"★".repeat(r.rating)}{"☆".repeat(Math.max(0, 5 - r.rating))}</div>}
+                <p class="review-quote">"{r.quote}"</p>
+                <p class="review-author">— {r.author_name}</p>
+              </div>
+            ))}
+          </div>
+          {reviews.length > 1 && (
+            <div class="carousel-nav">
+              <button class="carousel-arrow" type="button" aria-label="รีวิวก่อนหน้า" data-carousel-prev>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <div class="carousel-dots" role="tablist">
+                {reviews.map((_, i) => (
+                  <button class="carousel-dot" type="button" data-carousel-dot aria-label={`ไปที่รีวิวที่ ${i + 1}`} role="tab" aria-selected={i === 0}></button>
+                ))}
+              </div>
+              <button class="carousel-arrow" type="button" aria-label="รีวิวถัดไป" data-carousel-next>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
             </div>
-          ))}
+          )}
         </div>
       ) : (
         <p class="empty-state">ยังไม่มีรีวิวสำหรับหัวข้อนี้</p>
@@ -304,6 +346,66 @@ for (const s of sections) {
         });
       });
     });
+  });
+
+  // Gallery + reviews carousels — one scroll-snap track per [data-carousel],
+  // driven by the prev/dot/next pill nav. Buttons/dots move the track;
+  // an IntersectionObserver keeps the active dot in sync when the user
+  // swipes/drags the track directly instead of clicking a control.
+  document.querySelectorAll<HTMLElement>("[data-carousel]").forEach((root) => {
+    const track = root.querySelector<HTMLElement>("[data-carousel-track]");
+    if (!track) return;
+    const items = Array.from(track.querySelectorAll<HTMLElement>("[data-carousel-item]"));
+    if (items.length === 0) return;
+    const prevBtn = root.querySelector<HTMLButtonElement>("[data-carousel-prev]");
+    const nextBtn = root.querySelector<HTMLButtonElement>("[data-carousel-next]");
+    const dots = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-carousel-dot]"));
+
+    let current = 0;
+    const setActive = (index: number) => {
+      current = index;
+      dots.forEach((dot, i) => {
+        const active = i === index;
+        dot.classList.toggle("is-active", active);
+        dot.setAttribute("aria-selected", String(active));
+      });
+    };
+    const scrollToIndex = (index: number) => {
+      const clamped = Math.max(0, Math.min(items.length - 1, index));
+      track.scrollTo({ left: items[clamped].offsetLeft - track.offsetLeft, behavior: "smooth" });
+      // Set immediately rather than waiting to detect where the scroll lands
+      // — with several items visible at once, a mid-flight geometry check
+      // (the previous IntersectionObserver approach) picks up whichever item
+      // happens to cross its ratio threshold at that exact animation frame,
+      // not necessarily the one actually being scrolled to.
+      setActive(clamped);
+    };
+
+    prevBtn?.addEventListener("click", () => scrollToIndex(current - 1));
+    nextBtn?.addEventListener("click", () => scrollToIndex(current + 1));
+    dots.forEach((dot, i) => dot.addEventListener("click", () => scrollToIndex(i)));
+
+    // Manual swipe/drag on the track itself isn't covered by the buttons
+    // above, so re-derive the active dot from scroll position once scrolling
+    // settles (debounced — 'scroll' fires continuously while it's moving).
+    let settleTimer: ReturnType<typeof setTimeout>;
+    track.addEventListener("scroll", () => {
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(() => {
+        let nearest = 0;
+        let smallestGap = Infinity;
+        items.forEach((item, i) => {
+          const gap = Math.abs(item.offsetLeft - track.offsetLeft - track.scrollLeft);
+          if (gap < smallestGap) {
+            smallestGap = gap;
+            nearest = i;
+          }
+        });
+        setActive(nearest);
+      }, 120);
+    });
+
+    setActive(0);
   });
 
   // "Significant others." accordion: exactly one row open at a time, and the
@@ -782,13 +884,95 @@ for (const s of sections) {
     }
   }
 
-  .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
-    max-width: none;
+  /* Shared carousel shell — used by both the gallery and reviews panels
+     (Siraphob: same prev/dots/next pill control on both). Native scroll-snap
+     drives it rather than a transform-based slider: no per-breakpoint width
+     math, and it still works with a finger swipe/trackpad drag, not just the
+     pill's buttons — the JS above only has to move .scrollLeft and keep the
+     dots in sync via IntersectionObserver, not own the whole slide state. */
+  .carousel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
   }
+  .carousel-track {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    /* The pill nav below is the only visible scroll control — a native
+       scrollbar under the track as well would be a second, redundant one. */
+    scrollbar-width: none;
+  }
+  .carousel-track::-webkit-scrollbar {
+    display: none;
+  }
+  .carousel-item {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  /* Pill nav: prev arrow, dots, next arrow, all one grey capsule — matches
+     Siraphob's reference screenshot exactly rather than three separate
+     controls spread across the row. */
+  .carousel-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--em-neutral-bg);
+    border-radius: 999px;
+    padding: 0.4rem 0.5rem;
+  }
+  .carousel-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--em-ink);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .carousel-arrow:hover {
+    background: rgba(43, 43, 43, 0.08);
+  }
+  .carousel-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+  .carousel-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 0.35rem;
+  }
+  .carousel-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: rgba(43, 43, 43, 0.25);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .carousel-dot.is-active {
+    background: var(--em-ink);
+    transform: scale(1.3);
+  }
+
+  /* Gallery — several photos peek per view (fixed item width, not a % of the
+     track) so the strip visibly continues off the right edge as a scroll
+     affordance, the same way the reference screenshot's product row does. */
   .gallery-item {
+    width: 260px;
     margin: 0;
     border-radius: var(--radius);
     overflow: hidden;
@@ -806,20 +990,13 @@ for (const s of sections) {
     color: rgba(43, 43, 43, 0.65);
   }
 
-  .review-list {
-    display: flex;
-    flex-direction: column;
-  }
+  /* Reviews — one full-width slide at a time (a photo grid's "peek several"
+     treatment doesn't work for a paragraph of quote text), centered like a
+     classic testimonial slider. */
   .review-item {
-    padding: 1.75rem 0;
-    border-bottom: 1px solid rgba(43, 43, 43, 0.08);
-  }
-  .review-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-  .review-item:first-child {
-    padding-top: 0;
+    width: 100%;
+    text-align: center;
+    padding: 0 1rem;
   }
   .review-rating {
     color: var(--em-yellow-dark);
@@ -828,7 +1005,9 @@ for (const s of sections) {
   }
   .review-quote {
     font-style: italic;
-    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin: 0 0 0.75rem;
   }
   .review-author {
     font-weight: 600;

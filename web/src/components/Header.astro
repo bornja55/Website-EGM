@@ -39,6 +39,12 @@ const NAV_BEFORE_MEGA = [
 ];
 
 const NAV_AFTER_MEGA = [
+  // "บริการ" is the NON-teaching side of the business — room hire, venue hire
+  // for events, selling study documents. It is not a second course catalog
+  // (COURSE_PAGES_PRD.md describes it that way; that description is out of
+  // date). It sits directly after คอร์สเรียน because it is the other thing the
+  // school sells.
+  { href: "/services", label: "บริการ" },
   { href: "/blog", label: "บทความ" },
   {
     href: "/about",
@@ -46,11 +52,6 @@ const NAV_AFTER_MEGA = [
     children: [
       { href: "/team", label: "ทีมติวเตอร์" },
       { href: "/faq", label: "คำถามที่พบบ่อย" },
-      // /services is NOT in the requested order and has no other inbound link.
-      // Parked here rather than dropped so the page doesn't become orphaned the
-      // way /promotions was — see the note in the PR. Remove this line if the
-      // page is being retired.
-      { href: "/services", label: "บริการ" },
     ],
   },
   { href: "/contact", label: "ติดต่อเรา" },
@@ -286,7 +287,16 @@ const NAV_AFTER_MEGA = [
     padding: 1rem 0;
     background: var(--em-white);
     border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    position: relative;
+    /* Freezes at the top on scroll (Siraphob). Was `relative`, which only
+       matters for positioning the mega-menu/dropdown panels below it —
+       `sticky` keeps that same positioning context once stuck, so those
+       panels don't need any change. z-index has to clear the mega-panel's
+       own 30 (and the dropdown's 30) since both are its own descendants and
+       must render on top of the header bar, which in turn must clear
+       ordinary page content once it's pinned over it while scrolling. */
+    position: sticky;
+    top: 0;
+    z-index: 40;
   }
   .header-inner {
     display: flex;
@@ -404,6 +414,53 @@ const NAV_AFTER_MEGA = [
     white-space: nowrap;
   }
 
+  /* Compact dropdown, unlike the full-bleed mega-menu — three short links do
+     not need the window's width, and anchoring it to the trigger keeps the
+     relationship obvious. */
+  .has-dropdown {
+    position: relative;
+  }
+  .has-dropdown.is-open .caret {
+    transform: rotate(180deg);
+  }
+  .dropdown-panel {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translate(-50%, -6px);
+    margin-top: 0.5rem;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+    background: var(--em-white);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 14px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+    z-index: 30;
+  }
+  .has-dropdown.is-open .dropdown-panel {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+  }
+  .dropdown-panel a {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    color: var(--em-ink);
+    white-space: nowrap;
+  }
+  .dropdown-panel a:hover {
+    background: var(--em-neutral-bg);
+    color: var(--em-red);
+    text-decoration: none;
+  }
+
   .hamburger {
     display: none;
     flex-direction: column;
@@ -468,6 +525,12 @@ const NAV_AFTER_MEGA = [
     padding: 1rem 0;
     font-weight: 600;
     border-bottom: 1px solid rgba(43, 43, 43, 0.1);
+  }
+  .m-sublink {
+    display: block;
+    padding: 0.6rem 0 0.6rem 1rem;
+    font-weight: 600;
+    color: var(--em-ink);
   }
   .m-cta {
     display: inline-block;
