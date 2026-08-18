@@ -1,167 +1,464 @@
 ---
 export const prerender = false;
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { getServices } from "../lib/pocketbase";
-const services = await getServices().catch(() => []);
+import BentoGrid from "../components/BentoGrid.astro";
+import { getCourses, getActiveWorkshops, getServices, getSiteSettings } from "../lib/pocketbase";
+import { buildMenuGroups, tagHref } from "../lib/courseTags";
 
-// Group by category. The categories are now KINDS OF SERVICE (ให้เช่าสถานที่ /
-// อบรมองค์กร / บริการอื่นๆ), not school subjects — this page covers the
-// non-teaching side of the business, and the subject/level rows it used to
-// carry moved to the คอร์สเรียน mega-menu and /course/subject|grade pages.
-// Rows without a category fall into "บริการอื่นๆ" so nothing silently
-// disappears from the page.
-const groups = new Map<string, typeof services>();
-for (const s of services) {
-  const key = s.category || "บริการอื่นๆ";
-  if (!groups.has(key)) groups.set(key, []);
-  groups.get(key)!.push(s);
+const [courses, workshops, services, settings] = await Promise.all([
+  getCourses().catch(() => []),
+  getActiveWorkshops().catch(() => []),
+  getServices().catch(() => []),
+  getSiteSettings().catch(() => null),
+]);
+
+// ติวสอบ/ชั้นปี stay data-driven off real course tags — only Section 1's
+// subject/format grid became a fixed curated list (below). Same grouping
+// the mega-menu uses, so a value with zero real courses tagged never shows.
+const menuGroups = buildMenuGroups(courses);
+const examGroup = menuGroups.find((g) => g.group === "exam");
+const gradeGroup = menuGroups.find((g) => g.group === "grade");
+
+// Page structure, round 5 (Siraphob, 2026-08-17) — full rebuild of the
+// round-4 baseline:
+//   1. รายวิชา & รูปแบบ — fixed 3-col bento grid (66/33 | 33/33/33 | 33/66),
+//      NOT a carousel. ภาษาญี่ปุ่น dropped from THIS grid only (still a real
+//      tag elsewhere — mega-menu, /course pages — confirmed with Siraphob).
+//   2. เวิร์กช็อป — 1-col stack, one full-width card per workshop.
+//   3. ติวสอบ & ชั้นปี — ONE shared prev/dot/next control scrolling BOTH rows
+//      together (confirmed: 1 card per click, per row, simultaneously — the
+//      shorter row clamps at its own last card while the longer one keeps
+//      going). Symmetric center-peek carousel: 33%|100%|33% for ติวสอบ,
+//      33%|100%|100%|100%|33% for ชั้นปี. Cards 16:9.
+//   4. อื่นๆ — fixed 3-col 2-row bento grid (66/33 | 33/33/33), same
+//      fixed-grid model as Section 1 but keeps its own bespoke .grade-tile
+//      visual (top-right badge, "จองผ่าน LINE" cta — no detail page to link
+//      to, Service has no `image` field).
+
+// Representative photo per value. Real photos only (project rule) — see
+// web/public/images/services/README.txt for exactly where each one came
+// from and how it was verified.
+const SUBJECT_IMAGE: Record<string, string> = {
+  "ภาษาอังกฤษ": "/images/courses/english-foundation.jpg",
+  "วิทยาศาสตร์": "/images/courses/physics-sunday.jpg",
+  "ภาษาญี่ปุ่น": "/images/courses/japanese.jpg",
+};
+const FORMAT_IMAGE: Record<string, string> = {
+  "ตัวต่อตัว": "/images/services/format-private.jpg",
+  "เรียนกลุ่ม": "/images/services/format-group.jpg",
+  "onsite": "/images/services/format-onsite.jpg",
+};
+const GROUP_IMAGE: Partial<Record<string, string>> = {
+  grade: "/images/services/grade-level.jpg",
+  exam: "/images/services/exam-prep.jpg",
+};
+function subjectFormatImage(group: "subject" | "format", value: string): string | null {
+  return group === "subject" ? SUBJECT_IMAGE[value] || null : FORMAT_IMAGE[value] || null;
 }
+function tileItems(group: ReturnType<typeof buildMenuGroups>[number] | undefined) {
+  if (!group) return [];
+  return group.tags.map((t) => ({ label: t.value, href: t.href, image: GROUP_IMAGE[group.group] || null }));
+}
+
+// Section 1 — fixed curated grid, literal spec from Siraphob (2026-08-17):
+//   66% ภาษาอังกฤษ | 33% คณิตศาสตร์
+//   33% วิทยาศาสตร์ | 33% onsite     | 33% online
+//   33% เรียนกลุ่ม   | 66% ตัวต่อตัว
+// `span` out of 3 columns; `anchor` = gets aspect-ratio:16/9 — see
+// BentoGrid.astro's own comment for why only some tiles in a mixed-span row
+// need it (the narrower sibling just stretches to match via CSS Grid's
+// default align-items:stretch).
+const SECTION1_ITEMS: { value: string; group: "subject" | "format"; span: number; anchor: boolean }[] = [
+  { value: "ภาษาอังกฤษ", group: "subject", span: 2, anchor: true },
+  { value: "คณิตศาสตร์", group: "subject", span: 1, anchor: false },
+  { value: "วิทยาศาสตร์", group: "subject", span: 1, anchor: true },
+  { value: "onsite", group: "format", span: 1, anchor: true },
+  { value: "online", group: "format", span: 1, anchor: true },
+  { value: "เรียนกลุ่ม", group: "format", span: 1, anchor: false },
+  { value: "ตัวต่อตัว", group: "format", span: 2, anchor: true },
+];
+const section1Items = SECTION1_ITEMS.map((it) => ({
+  label: it.value,
+  href: tagHref(it.value),
+  image: subjectFormatImage(it.group, it.value),
+  cat: it.group === "subject" ? "รายวิชา" : "รูปแบบ",
+  span: it.span,
+  anchor: it.anchor,
+}));
+
+// Section 2 — 1 column, 2 rows: one full-width card per real workshop
+// (duration_type, migration 12). Falls back to every workshop unsplit if
+// nothing's categorised yet — same fallback as round 4, just flattened into
+// a single stack instead of 2 separate carousel rows.
+const workshopItems = (() => {
+  const withType = workshops.filter((w) => w.duration_type);
+  const groups =
+    withType.length > 0
+      ? [
+          { cat: "Workshop 1 วัน", items: workshops.filter((w) => w.duration_type === "1 วัน") },
+          { cat: "Workshop 1 หลักสูตร", items: workshops.filter((w) => w.duration_type === "1 หลักสูตร") },
+        ]
+      : [{ cat: "เวิร์กช็อป", items: workshops }];
+  return groups.flatMap((g) =>
+    g.items.map((w) => ({
+      label: w.title,
+      href: `/workshops/${w.slug}`,
+      image: w.cover_image || null,
+      cat: g.cat,
+      span: 1,
+      anchor: true,
+    }))
+  );
+})();
+
+// Section 3 — synced dual-track center-peek carousel. Round 7 correction
+// (Siraphob: "ก็แจ้งไปตั้งแต่แรกแล้วนิ ว่าต้องการขนาดไม่เท่ากัน" — the two
+// rows DO need different tile sizes, exactly per the original literal spec:
+// ติวสอบ = 33%|100%|33% (1 full tile visible + 2 peeks → BIG tile),
+// ชั้นปี = 33%|100%|100%|100%|33% (3 full tiles visible + 2 peeks → smaller
+// tiles). I'd wrongly "fixed" this to one universal size after measuring
+// apple.com's single-slide gallery, which doesn't actually have this
+// mixed-density-per-row idea at all — reverted back to the original
+// `syncTileWidth(n)` param model. PEEK=0.33 itself was never wrong (still
+// matches Apple's own measured ratio, ≈0.338); n is what sets how many
+// full tiles a row is sized to show at once: W = (100% - (n+1)*gap) /
+// (n + 2*peek).
+//
+// What WAS a genuine bug from that same investigation, and stays fixed:
+// every track loops independently now (modulo item count) instead of
+// clamping at its own last card. ติวสอบ only has 6 items vs ชั้นปี's 10 —
+// once the shared index passed 5, ติวสอบ used to freeze on its last card
+// with nothing left to peek on the right (a real dead end, blank
+// background instead of a card) — that was the actual empty gap in
+// Siraphob's screenshot, not the per-row size difference. Modulo wrapping
+// means there's always a real card to peek at any shared index. Dot-nav
+// visual (small circle default, active grows into a long bar) also stays
+// as measured against apple.com's real dotnav.
+const SYNC_PEEK = 0.33;
+const SYNC_GAP = 16;
+function syncTileWidth(n: number) {
+  return `calc((100% - ${(n + 1) * SYNC_GAP}px) / ${n + 2 * SYNC_PEEK})`;
+}
+const examItems = tileItems(examGroup);
+const gradeItems = tileItems(gradeGroup);
+const examTileWidth = syncTileWidth(1); // 33% | 100% | 33%
+const gradeTileWidth = syncTileWidth(3); // 33% | 100% | 100% | 100% | 33%
+const syncDotCount = Math.max(examItems.length, gradeItems.length);
+
+// อื่นๆ — fixed 3-col 2-row bento grid, same model as Section 1. Order/spans
+// are Siraphob's literal spec, matched against real PocketBase titles
+// (confirmed live via the services collection — "คอร์สการสนทนาทางธุรกิจ",
+// not "คอร์สสนทนาทางธุรกิจ"). Falls back to skipping a title if it's ever
+// renamed/removed in PocketBase rather than crashing the page.
+const OTHER_SPEC: { title: string; span: number }[] = [
+  { title: "จำหน่ายเอกสารและหนังสือติวสอบ", span: 2 },
+  { title: "เช่า Co-Working Space / ห้องประชุม", span: 1 },
+  { title: "คอร์สการสนทนาทางธุรกิจ (ภาษาอังกฤษ)", span: 1 },
+  { title: "แปลเอกสาร ราชการ/วิจัย/บทความ", span: 1 },
+  { title: "เช่าสถานที่จัดกิจกรรม", span: 1 },
+];
+const serviceByTitle = new Map(services.map((s) => [s.title, s]));
+const otherCards = OTHER_SPEC.filter((spec) => serviceByTitle.has(spec.title)).map((spec) => {
+  const s = serviceByTitle.get(spec.title)!;
+  return { title: spec.title, icon: s.icon || spec.title.charAt(0), span: spec.span };
+});
+// The widest tile sets the whole grid's row height (see the round-8 comment
+// by the markup below) — find it once so the script can measure ONLY that
+// one tile's real rendered width instead of guessing at container math.
+const otherMaxSpan = Math.max(0, ...otherCards.map((c) => c.span));
+const otherAnchorIndex = otherCards.findIndex((c) => c.span === otherMaxSpan);
 ---
 
 <BaseLayout title="บริการ">
   <section class="section hero-text">
     <div class="container">
       <h1 class="hero-heading">บริการ</h1>
-      <p class="hero-sub">บริการอื่นๆ นอกเหนือจากคอร์สเรียน — ให้เช่าห้องประชุมและสถานที่จัดกิจกรรม จำหน่ายเอกสารติวสอบ รับแปลเอกสาร และอบรมองค์กร</p>
+      <p class="hero-sub">
+        ทุกอย่างที่ English Mania สอน จัดเป็นหมวดให้เลือกดูได้เลย — เลือกตามวิชา ระดับชั้น ติวสอบ
+        หรือรูปแบบการเรียนที่ใช่ ไปจนถึงเวิร์กช็อปและบริการอื่นๆ นอกห้องเรียน
+      </p>
     </div>
   </section>
 
-  {/* Real photo — from the business's own Facebook photo export
-      (FB raw/Export_1786443238_452bc550/image_068.jpg, Jun 2026): a student
-      working through an English lesson on tablet + workbook. This page had
-      zero photography before — pure card grid — which is exactly the "just
-      a template" gap DESIGN.md's full-bleed photography direction exists to
-      fix. */}
-  <section class="photo-bleed">
-    <img src="/images/services-tutoring.jpg" alt="นักเรียนกำลังเรียนภาษาอังกฤษด้วยแท็บเล็ตและหนังสือแบบฝึกหัด" loading="lazy" />
-  </section>
+  {section1Items.length > 0 && (
+    <section class="section services-section">
+      <div class="services-shell">
+        <h2 class="section-heading">รายวิชา &amp; รูปแบบ</h2>
+        <BentoGrid items={section1Items} columns={3} gap={12} />
+      </div>
+    </section>
+  )}
 
-  <section class="section" style="padding-bottom: 0;">
-    <div class="container">
-      <div class="catalog-toolbar">
-        <div class="search-box">
-          <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2" />
-            <path d="M21 21l-4.3-4.3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-          </svg>
-          <input type="search" id="service-search" placeholder="ค้นหาบริการ..." aria-label="ค้นหาบริการ" />
-        </div>
-        {groups.size > 1 && (
-          <div class="filter-wrap">
-            <button type="button" id="filter-toggle" class="btn btn-outline filter-btn" aria-expanded="false" aria-controls="filter-panel">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-              </svg>
-              หมวดหมู่
-              <span class="filter-count" id="filter-count" hidden>0</span>
-            </button>
-            <div class="filter-panel" id="filter-panel" hidden>
-              <div class="filter-options">
-                {[...groups.keys()].map((category) => (
-                  <label class="filter-option">
-                    <input type="checkbox" name="service-category" value={category} />
-                    <span>{category}</span>
-                  </label>
+  {workshopItems.length > 0 && (
+    <section class="section services-section">
+      <div class="services-shell">
+        <h2 class="section-heading">เวิร์กช็อป</h2>
+        <BentoGrid items={workshopItems} columns={1} gap={16} cardAspect="32 / 9" layout="stacked" mediaScale={0.5} />
+      </div>
+    </section>
+  )}
+
+  {(examItems.length > 0 || gradeItems.length > 0) && (
+    <section class="section services-section">
+      <div class="services-shell">
+        <h2 class="section-heading">ติวสอบ &amp; ชั้นปี</h2>
+        <div class="sync-wrap" data-sync-carousel>
+          {examItems.length > 0 && (
+            <div class="sync-row">
+              <div class="sync-track" data-sync-track style={`--tile-w: ${examTileWidth};`}>
+                <div class="sync-spacer" aria-hidden="true"></div>
+                {examItems.map((it) => (
+                  <a class="sync-tile" data-sync-item href={it.href}>
+                    {it.image ? (
+                      <img src={it.image} alt={it.label} loading="lazy" />
+                    ) : (
+                      <div class="tile-fallback" aria-hidden="true"></div>
+                    )}
+                    <span class="tile-cat">ติวสอบ</span>
+                    <div class="hero-overlay">
+                      <span class="btn btn-outline">รายละเอียด</span>
+                      <span class="hero-title">{it.label}</span>
+                    </div>
+                  </a>
+                ))}
+                <div class="sync-spacer" aria-hidden="true"></div>
+              </div>
+            </div>
+          )}
+          {gradeItems.length > 0 && (
+            <div class="sync-row">
+              <div class="sync-track" data-sync-track style={`--tile-w: ${gradeTileWidth};`}>
+                <div class="sync-spacer" aria-hidden="true"></div>
+                {gradeItems.map((it) => (
+                  <a class="sync-tile" data-sync-item href={it.href}>
+                    {it.image ? (
+                      <img src={it.image} alt={it.label} loading="lazy" />
+                    ) : (
+                      <div class="tile-fallback" aria-hidden="true"></div>
+                    )}
+                    <span class="tile-cat">ชั้นปี</span>
+                    <div class="hero-overlay">
+                      <span class="btn btn-outline">รายละเอียด</span>
+                      <span class="hero-title">{it.label}</span>
+                    </div>
+                  </a>
+                ))}
+                <div class="sync-spacer" aria-hidden="true"></div>
+              </div>
+            </div>
+          )}
+          {syncDotCount > 1 && (
+            <div class="carousel-nav">
+              <button class="carousel-arrow" type="button" aria-label="ก่อนหน้า" data-carousel-prev>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
+              <div class="carousel-dots" role="tablist">
+                {Array.from({ length: syncDotCount }).map((_, i) => (
+                  <button class="carousel-dot" type="button" data-carousel-dot aria-label={`ไปที่การ์ดที่ ${i + 1}`} role="tab" aria-selected={i === 0}>
+                    <span class="carousel-dot-fill" data-carousel-dot-fill></span>
+                  </button>
                 ))}
               </div>
-              <button type="button" id="filter-clear" class="filter-clear">ล้างตัวกรอง</button>
+              <button class="carousel-arrow" type="button" aria-label="ถัดไป" data-carousel-next>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
-      <p class="catalog-empty" id="catalog-empty" hidden>ไม่พบบริการที่ตรงกับคำค้นหา ลองคำอื่นหรือล้างตัวกรอง</p>
-    </div>
-  </section>
+    </section>
+  )}
 
-  {[...groups.entries()].map(([category, items]) => (
-    <section class="section section-neutral category-section" data-category={category}>
-      <div class="container">
-        <h2 class="category-heading">{category}</h2>
-        <div class="grid grid-2">
-          {items.map((s) => (
+  {/* อื่นๆ — Section 4, fixed 3-col 2-row bento grid. Own bespoke .grade-tile
+      markup (not BentoGrid) — top-right title badge, bottom-right "จองผ่าน
+      LINE" (no per-service detail page to link to), icon-on-flat-tint photo
+      slot (Service has no `image` field). Round 6: every card the SAME
+      height regardless of span. Round 8 fix (Siraphob: "สี BG ไม่เหมือน
+      Section อื่น" — the widest tile's icon box was overflowing its own
+      card, so its yellow fallback filled the card edge-to-edge with none of
+      the intended CI-neutral gutter showing, which read as a background
+      mismatch against every other section's letterboxed media): the OLD
+      `grid-auto-rows: calc(... 100% ...)` was fighting a genuine CSS
+      circularity — percentages inside `grid-auto-rows` resolve against the
+      GRID's own height, but that height is auto (determined BY the rows
+      this property sets), so `100%` never meant "the grid's width" the way
+      the formula assumed, and silently computed a row height barely half of
+      what a 16:9 box at the widest tile's real width needs — hence that
+      tile's icon overflowing its own card with no gutter left to show the
+      CI background in. Fixed by measuring the widest tile's ACTUAL rendered
+      width in the script below (`data-row-anchor`) and setting the row
+      height from that in JS — sidesteps the percentage circularity
+      entirely, same category of "don't fight indefinite-percentage CSS,
+      measure it" fix as the sync-track spacer rewrite in
+      HANDOFF-services-tile-sizing.md. */}
+  {otherCards.length > 0 && (
+    <section class="section services-section">
+      <div class="services-shell">
+        <h2 class="section-heading">อื่นๆ</h2>
+        <div class="other-grid" data-other-grid>
+          {otherCards.map((s, i) => (
             <div
-              class="card service-card"
-              data-search={`${s.title} ${s.description || ""}`.toLowerCase()}
-              data-category={category}
+              class="grade-tile"
+              style={`grid-column: span ${s.span};`}
+              data-row-anchor={s.span === otherMaxSpan && i === otherAnchorIndex ? "" : undefined}
             >
-              <div class="icon-circle">{s.icon || s.title.charAt(0)}</div>
-              <h3>{s.title}</h3>
-              <p set:html={s.description} />
+              <div class="tile-fallback other-fallback" aria-hidden="true">{s.icon}</div>
+              <span class="grade-label">{s.title}</span>
+              {settings?.line_oa_url && (
+                <a class="grade-cta" href={settings.line_oa_url} target="_blank" rel="noopener">
+                  จองผ่าน LINE
+                </a>
+              )}
             </div>
           ))}
         </div>
       </div>
     </section>
-  ))}
+  )}
 </BaseLayout>
 
 <script>
-  const searchInput = document.getElementById("service-search") as HTMLInputElement | null;
-  const filterToggle = document.getElementById("filter-toggle") as HTMLButtonElement | null;
-  const filterPanel = document.getElementById("filter-panel");
-  const filterClear = document.getElementById("filter-clear");
-  const filterCount = document.getElementById("filter-count");
-  const emptyState = document.getElementById("catalog-empty");
-  const cards = Array.from(document.querySelectorAll<HTMLElement>(".service-card"));
-  const sections = Array.from(document.querySelectorAll<HTMLElement>(".category-section"));
-  const checkboxes = Array.from(document.querySelectorAll<HTMLInputElement>('input[name="service-category"]'));
+  // Section 3's synced carousel — ONE shared prev/dot/next control drives
+  // TWO independent tracks (ติวสอบ, ชั้นปี) together. Confirmed with
+  // Siraphob: advance 1 card per click in both rows simultaneously; the
+  // shorter row clamps at its own last card once exhausted rather than
+  // looping or blocking the longer row (that clamp is for MANUAL prev/next/
+  // dot clicks only — autoplay below wraps past the end instead, a
+  // different, later request). Each track centers its own current item by
+  // computing an explicit scrollLeft target (item.offsetLeft minus half the
+  // leftover viewport room) rather than relying on CSS scroll-snap alone,
+  // since the button/dot clicks need a precise target position and two
+  // independently-sized tracks have to land in sync on every click.
+  // Deliberately `behavior:"instant"`, not "smooth" — smooth scrollTo proved
+  // unreliable while verifying this live (the animation would silently not
+  // run at all on some clicks, leaving the track exactly where it started
+  // even though the dot/state updated) — instant jumps were 100% consistent
+  // in the same testing. Native swipe/drag on the track is untouched by
+  // this and still scrolls with the browser's own inertia.
+  //
+  // Round 6 (2026-08-17, Siraphob, "เหมือนตัวอย่าง apple.com"): starts on
+  // the 3rd dot, auto-advances every 5s, loops from the last dot back to
+  // the first. Dots are long bars (.carousel-dot-fill) — filled solid for
+  // dots already passed, animating 0→100% over the same 5s for the current
+  // one, empty for what's ahead — restarted cleanly on every index change
+  // via the `animation:none` + reflow trick (CSS animations don't restart
+  // just by re-adding the same class). Autoplay pauses on hover and its
+  // timer resets on any manual prev/next/dot interaction, so it doesn't
+  // fight the person actively browsing.
+  const AUTOPLAY_MS = 5000;
+  document.querySelectorAll<HTMLElement>("[data-sync-carousel]").forEach((root) => {
+    const tracks = Array.from(root.querySelectorAll<HTMLElement>("[data-sync-track]"));
+    if (tracks.length === 0) return;
+    const trackItems = tracks.map((t) => Array.from(t.querySelectorAll<HTMLElement>("[data-sync-item]")));
+    const maxLen = Math.max(...trackItems.map((arr) => arr.length));
+    const prevBtn = root.querySelector<HTMLButtonElement>("[data-carousel-prev]");
+    const nextBtn = root.querySelector<HTMLButtonElement>("[data-carousel-next]");
+    const dots = Array.from(root.querySelectorAll<HTMLButtonElement>("[data-carousel-dot]"));
 
-  filterToggle?.addEventListener("click", () => {
-    if (!filterPanel) return;
-    const open = filterPanel.hasAttribute("hidden");
-    filterPanel.toggleAttribute("hidden", !open);
-    filterToggle.setAttribute("aria-expanded", String(open));
-  });
-  document.addEventListener("click", (e) => {
-    if (!filterPanel || filterPanel.hidden || !filterToggle) return;
-    const wrap = filterToggle.closest(".filter-wrap");
-    if (wrap && !wrap.contains(e.target as Node)) {
-      filterPanel.hidden = true;
-      filterToggle.setAttribute("aria-expanded", "false");
-    }
-  });
+    let current = 0;
+    let autoplayTimer: ReturnType<typeof setInterval> | null = null;
 
-  const applyFilters = () => {
-    const query = (searchInput?.value || "").trim().toLowerCase();
-    const selectedCategories = checkboxes.filter((cb) => cb.checked).map((cb) => cb.value);
-    if (filterCount) {
-      filterCount.textContent = String(selectedCategories.length);
-      filterCount.hidden = selectedCategories.length === 0;
-    }
+    const setActive = (index: number) => {
+      current = index;
+      dots.forEach((dot, i) => {
+        const active = i === index;
+        dot.classList.toggle("is-active", active);
+        dot.setAttribute("aria-selected", String(active));
+        const fill = dot.querySelector<HTMLElement>("[data-carousel-dot-fill]");
+        if (fill) {
+          // Restart the CSS fill animation cleanly: setting animation:none
+          // then forcing a reflow makes the browser forget the previous
+          // run, so re-enabling it (clearing the inline override) always
+          // starts from 0% instead of possibly no-op'ing if the dot was
+          // already mid-animation.
+          fill.style.animation = "none";
+          void fill.offsetWidth;
+          fill.style.animation = "";
+        }
+      });
+    };
+    const centerItem = (track: HTMLElement, item: HTMLElement) => {
+      const target = item.offsetLeft - (track.clientWidth - item.clientWidth) / 2;
+      track.scrollTo({ left: Math.max(0, target), behavior: "instant" });
+    };
+    const scrollToIndex = (index: number) => {
+      const clamped = Math.max(0, Math.min(maxLen - 1, index));
+      tracks.forEach((track, ti) => {
+        const items = trackItems[ti];
+        if (items.length === 0) return;
+        // Wrap independently per track (round 7) — NOT Math.min-clamped at
+        // the shorter track's own last item anymore. A shorter track (ติวสอบ,
+        // 6 vs ชั้นปี's 10) used to freeze on its last card once the shared
+        // index ran past its length, leaving nothing to peek on that side —
+        // the dead blank gap Siraphob flagged. Modulo keeps every track
+        // showing a real, centered card with real peeks on both sides at
+        // every dot position, same as apple.com's own gallery never dead-ending.
+        const itemIndex = clamped % items.length;
+        centerItem(track, items[itemIndex]);
+      });
+      setActive(clamped);
+    };
 
-    let visibleCount = 0;
-    cards.forEach((card) => {
-      const searchText = card.getAttribute("data-search") || "";
-      const category = card.getAttribute("data-category") || "";
-      const matchesSearch = !query || searchText.includes(query);
-      const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(category);
-      const visible = matchesSearch && matchesCategory;
-      card.classList.toggle("is-hidden", !visible);
-      if (visible) visibleCount++;
+    const stopAutoplay = () => {
+      if (autoplayTimer) {
+        clearInterval(autoplayTimer);
+        autoplayTimer = null;
+      }
+    };
+    const startAutoplay = () => {
+      stopAutoplay();
+      if (maxLen <= 1) return;
+      autoplayTimer = setInterval(() => {
+        const next = current + 1 >= maxLen ? 0 : current + 1; // loop at the end
+        scrollToIndex(next);
+      }, AUTOPLAY_MS);
+    };
+
+    prevBtn?.addEventListener("click", () => {
+      scrollToIndex(current - 1);
+      startAutoplay();
     });
-    // A category section with every card hidden shouldn't leave its heading
-    // floating over an empty grid.
-    sections.forEach((section) => {
-      const anyVisible = Array.from(section.querySelectorAll<HTMLElement>(".service-card")).some(
-        (c) => !c.classList.contains("is-hidden")
-      );
-      section.classList.toggle("is-hidden", !anyVisible);
+    nextBtn?.addEventListener("click", () => {
+      scrollToIndex(current + 1);
+      startAutoplay();
     });
-    if (emptyState) emptyState.hidden = visibleCount !== 0;
-  };
+    dots.forEach((dot, i) =>
+      dot.addEventListener("click", () => {
+        scrollToIndex(i);
+        startAutoplay();
+      })
+    );
+    root.addEventListener("mouseenter", stopAutoplay);
+    root.addEventListener("mouseleave", startAutoplay);
 
-  searchInput?.addEventListener("input", applyFilters);
-  checkboxes.forEach((cb) => cb.addEventListener("change", applyFilters));
-  filterClear?.addEventListener("click", () => {
-    checkboxes.forEach((cb) => (cb.checked = false));
-    applyFilters();
+    scrollToIndex(Math.min(2, maxLen - 1)); // "จุดที่ 3" — 3rd dot, 0-indexed
+    startAutoplay();
   });
+
+  // Section 4 (อื่นๆ) row height — round 8. Measures the WIDEST tile's real
+  // rendered width ([data-row-anchor]) and derives the whole grid's row
+  // height from that (16:9), writing it to --other-row-h on
+  // [data-other-grid]. Doing this in JS instead of a pure-CSS
+  // `calc(100% ...)` sidesteps a genuine CSS circularity: percentages
+  // inside `grid-auto-rows` resolve against the grid's own (indefinite,
+  // auto) height, not its width — see the markup/CSS comments by
+  // .other-grid for the full story. Re-measures on resize since the
+  // relationship between viewport width and column width isn't a fixed
+  // ratio (`.services-shell`'s padding is a clamp()).
+  function syncOtherGridRowHeight() {
+    const grid = document.querySelector<HTMLElement>("[data-other-grid]");
+    const anchor = grid?.querySelector<HTMLElement>("[data-row-anchor]");
+    if (!grid || !anchor) return;
+    const width = anchor.getBoundingClientRect().width;
+    if (width > 0) {
+      grid.style.setProperty("--other-row-h", `${Math.round((width * 9) / 16)}px`);
+    }
+  }
+  syncOtherGridRowHeight();
+  window.addEventListener("resize", syncOtherGridRowHeight);
 </script>
 
 <style>
-  /* Ported from design/generated_screens/คอร์สเรียน _ บริการ - English Mania
-     (Desktop)-DESKTOP.html — bento grid of service cards, colors from the 7
-     DESIGN.md tokens (nothing from Stitch's invented Material-You palette). */
   .hero-text {
     text-align: center;
     padding-bottom: 2rem;
@@ -169,177 +466,289 @@ for (const s of services) {
   .hero-sub {
     font-size: 1.15rem;
     color: rgba(43, 43, 43, 0.7);
-    max-width: 40rem;
+    max-width: 42rem;
     margin: 1.25rem auto 0;
   }
-  .category-section + .category-section {
+
+  /* Continuous flow, not one-full-screen-per-topic — Siraphob, round 4:
+     "ฉันต้องการให้มันดูเหมือนเป็น Section เดียวกันต่อกันแล้ว ควรมี gap
+     เท่ากับใน section เดียวกัน". Kept through round 5's grid rebuild. */
+  .services-section {
+    padding: 1.5rem 0;
+  }
+  .services-section + .services-section {
     padding-top: 0;
   }
-  .category-heading {
-    color: var(--em-red);
-    margin-bottom: 1.5rem;
-  }
-  .photo-bleed {
+  .services-shell {
     width: 100%;
-    height: clamp(220px, 32vw, 420px);
-    overflow: hidden;
+    max-width: none;
+    margin: 0;
+    padding: 0 clamp(1.5rem, 4vw, 3.5rem);
   }
-  .photo-bleed img {
+  .section-heading {
+    color: var(--em-red);
+    margin-bottom: 0;
+  }
+  .services-shell > :global(.bento-grid),
+  .other-grid,
+  .sync-wrap {
+    margin-top: 16px;
+  }
+
+  /* Section 3 — synced dual-track center-peek carousel. --tile-w set inline
+     per track (different for ติวสอบ vs ชั้นปี — see frontmatter). Peek room
+     comes from .sync-spacer flex items at each end of the track, NOT
+     container padding — padding-inline on the same element whose children's
+     width is a percentage of it creates a circular reference (the
+     percentage resolves against the padding-shrunk content box, not the
+     full track width), which silently produced a much narrower tile than
+     intended. Spacers sidestep that entirely: .sync-track itself stays
+     unpadded, so --tile-w's `100%` resolves against the real full width. */
+  .sync-row + .sync-row {
+    margin-top: 16px;
+  }
+  .sync-track {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .sync-track::-webkit-scrollbar {
+    display: none;
+  }
+  .sync-spacer {
+    flex: 0 0 calc(var(--tile-w) * 0.33);
+  }
+  .sync-tile {
+    position: relative;
+    flex: 0 0 var(--tile-w);
+    width: var(--tile-w);
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: block;
+    scroll-snap-align: center;
+    /* CI background behind the photo — same rule as BentoGrid.astro and
+       .grade-tile: shows on the (rare) frame a lazy-loaded image hasn't
+       painted yet, instead of a flash of plain white. */
+    background: var(--em-neutral-bg);
+  }
+  a.sync-tile:hover {
+    text-decoration: none;
+  }
+  .sync-tile img,
+  .sync-tile .tile-fallback {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
   }
-  .grid {
-    display: grid;
-    gap: 2rem;
+  /* display:flex (not inline-flex) is what makes `margin: auto` actually
+     center this — auto margins only resolve to centering on BLOCK-level
+     boxes; an inline-level box (inline-flex included) ignores them and
+     just sits at its normal inline position, which is what read as
+     "stuck on the left" (Siraphob, round 6). */
+  .carousel-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--em-neutral-bg);
+    border-radius: 999px;
+    padding: 0.4rem 0.5rem;
+    margin: 0.75rem auto 0;
+    width: fit-content;
   }
-  .grid-2 {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-  .service-card {
-    transition: transform 0.2s ease;
-  }
-  .service-card:hover {
-    transform: translateY(-4px);
-  }
-  .icon-circle {
-    width: 3.5rem;
-    height: 3.5rem;
+  .carousel-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background: var(--em-neutral-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 1.25rem;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--em-red);
-  }
-  .service-card.is-hidden {
-    display: none;
-  }
-  .category-section.is-hidden {
-    display: none;
-  }
-
-  /* Search + filter toolbar — same pattern/markup as course/index.astro's
-     catalog toolbar (Siraphob: search + filter on both /course and
-     /services), duplicated here rather than shared since these are two
-     separate Astro pages with their own scoped <style>. */
-  .catalog-toolbar {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-  }
-  .search-box {
-    flex: 1 1 260px;
-    position: relative;
-    display: flex;
-    align-items: center;
-  }
-  .search-icon {
-    position: absolute;
-    left: 1rem;
-    width: 18px;
-    height: 18px;
-    color: rgba(43, 43, 43, 0.45);
-    pointer-events: none;
-  }
-  .search-box input {
-    width: 100%;
-    padding: 0.85rem 1rem 0.85rem 2.75rem;
-    border-radius: 999px;
-    border: 1px solid rgba(43, 43, 43, 0.15);
-    background: var(--em-white);
-    font: inherit;
-    font-size: 0.98rem;
-  }
-  .search-box input:focus {
-    outline: none;
-    border-color: var(--em-red);
-  }
-  .filter-wrap {
-    position: relative;
-    flex: none;
-  }
-  .filter-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    white-space: nowrap;
-  }
-  .filter-btn svg {
-    width: 18px;
-    height: 18px;
-  }
-  .filter-count {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 0.35rem;
-    border-radius: 999px;
-    background: var(--em-red);
-    color: var(--em-white);
-    font-size: 0.75rem;
-    font-weight: 700;
-  }
-  .filter-panel {
-    position: absolute;
-    top: calc(100% + 0.5rem);
-    right: 0;
-    z-index: 10;
-    width: min(280px, 84vw);
-    background: var(--em-white);
-    border: 1px solid rgba(43, 43, 43, 0.1);
-    border-radius: 16px;
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    max-height: 70vh;
-    overflow-y: auto;
-  }
-  /* Same [hidden]-vs-class-display specificity tie as course/index.astro. */
-  .filter-panel[hidden],
-  .filter-count[hidden] {
-    display: none;
-  }
-  .filter-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .filter-option {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 0.75rem;
-    border-radius: 999px;
-    background: var(--em-neutral-bg);
-    font-size: 0.88rem;
-    cursor: pointer;
-  }
-  .filter-option input {
-    accent-color: var(--em-red);
-  }
-  .filter-clear {
-    align-self: flex-start;
+    border: none;
     background: none;
+    color: var(--em-ink);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .carousel-arrow:hover {
+    background: rgba(43, 43, 43, 0.08);
+  }
+  .carousel-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+  .carousel-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 0.35rem;
+  }
+  /* Round 7 — matched against apple.com's real "Endless entertainment."
+     dotnav (measured live via Chrome MCP, not guessed): every dot is a
+     small 8px circle by default; ONLY the current one widens into a long
+     progress-bar pill (apple's own current dot measured 32px wide vs 8px
+     for every other dot — visited dots are NOT left as filled bars, they
+     shrink straight back to the same small circle as upcoming ones, so
+     there's only ever ONE wide dot on screen at a time). `width` transition
+     is what animates the grow/shrink; `.carousel-dot-fill`'s scaleX
+     animation is the progress sweep inside that pill, timed to
+     AUTOPLAY_MS in the script above — change both together. */
+  .carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
     border: none;
     padding: 0;
-    color: var(--em-red);
-    font-weight: 600;
-    font-size: 0.9rem;
+    overflow: hidden;
+    position: relative;
+    background: rgba(43, 43, 43, 0.25);
     cursor: pointer;
+    flex: none;
+    transition: width 0.25s ease;
   }
-  .catalog-empty {
-    text-align: center;
-    padding: 2rem 0;
-    color: rgba(43, 43, 43, 0.6);
+  .carousel-dot.is-active {
+    width: 32px;
+    background: rgba(43, 43, 43, 0.15);
+  }
+  .carousel-dot-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--em-red);
+    border-radius: inherit;
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  .carousel-dot.is-active .carousel-dot-fill {
+    animation: carousel-dot-fill 5s linear forwards;
+  }
+  @keyframes carousel-dot-fill {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  /* tile-cat/hero-overlay — same visual language as BentoGrid.astro's own
+     tiles, duplicated here because Astro scopes component styles to their
+     own file (bit the project before — see HANDOFF-services-tile-sizing.md
+     "Astro CSS scoping gotcha"). Section 3 stays bespoke markup (not
+     BentoGrid) because it needs the 2-track sync behaviour BentoGrid
+     doesn't have. */
+  .tile-fallback {
+    background: linear-gradient(135deg, var(--em-yellow) 0%, var(--em-yellow-dark) 100%);
+  }
+  .tile-cat {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    background: rgba(0, 0, 0, 0.55);
+    color: var(--em-white);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .hero-overlay {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0) 70%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hero-overlay .btn-outline {
+    color: var(--em-white);
+    border-color: var(--em-white);
+    flex: none;
+  }
+  .hero-title {
+    color: var(--em-white);
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  /* อื่นๆ (Section 4) — fixed 3-col grid, own bespoke .grade-tile visual:
+     top-right title badge, bottom-right "จองผ่าน LINE" CTA. Round 6
+     (Siraphob: "ขนาดของ Card ทุกใบใน section ต้องสูงเท่ากัน"): every card
+     the SAME height regardless of span — one fixed `grid-auto-rows` for the
+     whole grid instead of per-row auto-sizing. Round 8: that row height is
+     now set from `--other-row-h`, a CSS var the script below computes from
+     the widest tile's REAL measured width — see the markup comment for why
+     a pure-CSS `calc(100% ...)` here was structurally broken (percentages
+     in `grid-auto-rows` resolve against the grid's own indefinite height,
+     not its width, no matter how the formula reads). Icon box is a true
+     16:9 rectangle centered in the card (flex), CI background
+     (`--em-neutral-bg`) showing in the gutter above/below it on cards
+     taller than 16:9 — same media model as BentoGrid.astro. */
+  .other-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: var(--other-row-h, 300px);
+    gap: 16px;
+  }
+  .grade-tile {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--em-neutral-bg);
+  }
+  a.grade-tile:hover {
+    text-decoration: none;
+  }
+  .grade-tile img {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    background: var(--em-neutral-bg);
+    display: block;
+  }
+  .grade-tile .tile-fallback {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+  }
+  .grade-tile .grade-label {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    max-width: calc(100% - 1.2rem);
+    background: rgba(0, 0, 0, 0.55);
+    color: var(--em-white);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .grade-tile .grade-cta {
+    position: absolute;
+    bottom: 0.6rem;
+    right: 0.6rem;
+    background: var(--em-white);
+    color: var(--em-ink);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .other-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--em-red-dark);
   }
 </style>

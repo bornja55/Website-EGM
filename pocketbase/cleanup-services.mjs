@@ -54,10 +54,38 @@ const DELETE = process.argv.includes("--delete");
 
 const MOCK = "[MOCKUP — ต้องแก้เป็นข้อมูลจริง]";
 
-// EMPTY ON PURPOSE. Add exact titles here only after confirming, row by row,
-// that the same thing is genuinely sold elsewhere on the site. Then run with
-// --delete. See the header comment for why this is not inferred.
-const DELETE_TITLES = [];
+// Confirmed with Siraphob 2026-08-16 (long /grill-me session on the
+// /services redesign), row by row:
+// - The 12 ภาษาอังกฤษ/คณิตศาสตร์/วิทยาศาสตร์ rows (8 distinct titles, some
+//   duplicated across math/science) genuinely duplicate the real courses now
+//   in `courses` — /course covers this ground properly (individual pages,
+//   real current prices), this page shouldn't carry a second, staler copy.
+// - "Digital Marketing | LINE OA" — Siraphob: this was actually a B2C
+//   offering (not B2B in-house training, corrected from this file's older
+//   assumption below) and has been discontinued. Delete outright, don't
+//   recategorise.
+// - "ตะลุยสอบ ด่วนพิเศษ" and "ติวสอบ TOEIC/IELTS/Toefl" are real, but sold to
+//   students on a timetable like any other course — moved into `courses` by
+//   patch-format-tags-and-exam-courses.mjs (ตะลุยสอบ ด่วนพิเศษ verbatim;
+//   TOEIC/IELTS/Toefl split into 3 separate courses, not one bundled row —
+//   Siraphob explicitly rejected a single price reading as "everything for
+//   one price"). Delete the `services` copies now that `courses` has the
+//   real replacements.
+const DELETE_TITLES = [
+  // ภาษาอังกฤษ/คณิตศาสตร์/วิทยาศาสตร์ subject catalog — superseded by /course
+  "ปรับพื้นฐาน",
+  "เรียนกลุ่ม ตามระดับ",
+  "เรียนส่วนตัว",
+  "ประถม",
+  "มัธยมต้น",
+  "มัธยมปลาย",
+  "ติวสอบ",
+  // discontinued B2C offering
+  "Digital Marketing | LINE OA",
+  // moved into `courses` (see patch-format-tags-and-exam-courses.mjs)
+  "ตะลุยสอบ ด่วนพิเศษ",
+  "ติวสอบ TOEIC/IELTS/Toefl",
+];
 
 // Explicit new category per row. Every row currently in the collection is
 // listed, so nothing falls through to a default and quietly changes meaning.
@@ -67,17 +95,11 @@ const RECATEGORISE = {
   "แปลเอกสาร ราชการ/วิจัย/บทความ": "บริการอื่นๆ",
 
   // B2B, delivered at the client's own office — sold to companies, not to
-  // parents, and never on a public class timetable. These genuinely BELONG on
-  // /services; they are not misplaced course records.
-  // (Siraphob, 2026-08-14: "สนทนาธุรกิจ เป็นการไปสอนกลุ่มที่บริษัทลูกค้า")
-  "Digital Marketing | LINE OA": "อบรมในองค์กร (In-house)",
+  // parents, and never on a public class timetable. Genuinely belongs on
+  // /services; not a misplaced course record.
+  // (Siraphob, 2026-08-14: "สนทนาธุรกิจ เป็นการไปสอนกลุ่มที่บริษัทลูกค้า" —
+  // still active as of 2026-08-16, re-confirmed.)
   "คอร์สการสนทนาทางธุรกิจ (ภาษาอังกฤษ)": "อบรมในองค์กร (In-house)",
-
-  // Sold to students, so these are courses in the wrong collection. Parked
-  // under a real category until they get proper `courses` records — see the
-  // script's closing report.
-  "ตะลุยสอบ ด่วนพิเศษ": "ติวสอบ",
-  "ติวสอบ TOEIC/IELTS/Toefl": "ติวสอบ",
 };
 
 // Named by Siraphob as real services with no record anywhere.
@@ -162,10 +184,12 @@ async function main() {
     console.log(`  ~ "${s.title}" -> "${category}"`);
   }
 
-  // Anything not in RECATEGORISE is a row this script has no instruction for —
-  // surfaced rather than left to a default, since those are exactly the rows
-  // whose status is unconfirmed.
-  const unhandled = services.filter((s) => !(s.title in RECATEGORISE));
+  // Anything not in RECATEGORISE or DELETE_TITLES is a row this script has no
+  // instruction for — surfaced rather than left to a default, since those are
+  // exactly the rows whose status is unconfirmed.
+  const unhandled = services.filter(
+    (s) => !(s.title in RECATEGORISE) && !DELETE_TITLES.includes(s.title)
+  );
 
   for (const row of CREATE) {
     if (services.some((s) => s.title === row.title)) {

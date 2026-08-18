@@ -1,0 +1,206 @@
+---
+//
+// Static (non-carousel) photo-tile grid — used for /services Section 1
+// (รายวิชา & รูปแบบ, columns=3) and Section 2 (เวิร์กช็อป, columns=1). Per
+// Siraphob's explicit spec (2026-08-17): fixed items in a real CSS Grid with
+// literal column-span widths (66%/33% etc, expressed as `span` out of
+// `columns`), NOT a scrolling/clipping carousel — that model (TileRow.astro)
+// stays reserved for Section 3 only.
+//
+// Row-height model: within a CSS Grid row, an item with NO explicit height
+// stretches (default align-items:stretch) to match whatever height the row
+// ends up at. So only the tile(s) carrying the row's own auto-height
+// reference need `aspect-ratio` (`anchor: true`, ratio via `cardAspect`) —
+// everything else in that row just stretches to fit. This is the exact
+// mechanic the pre-carousel TileRow used. For a row where every item is the
+// same span (all equal-width), mark every item in that row `anchor: true`.
+//
+// Media model (round 6, 2026-08-17, Siraphob: "ขนาดรูปเป็น 16:9 ตั้งกึ่งกลาง
+// ของ card และมีพื้นหลัง"): the PHOTO itself is always a true 16:9 rectangle,
+// centered inside the card, regardless of the card's own outer shape —
+// `.bento-tile` is a flex-centered box with a CI background color
+// (`--em-neutral-bg`) showing through wherever the 16:9 media doesn't reach
+// (letterbox top/bottom on a taller card, pillarbox left/right on a
+// shorter one).
+//
+// This needs a wrapper (`.bento-media`), not just `aspect-ratio` on the
+// `<img>` directly — tried that first and it was wrong: CSS `aspect-ratio`
+// on a replaced element only sizes its OWN box, it does NOT change what
+// `object-fit` treats as the image's "natural" ratio, so `object-fit:
+// contain` still measured against the source photo's real dimensions and
+// left gaps sized by THAT ratio, not a clean 16:9. Forcing an actual true
+// 16:9 crop needs a real 16:9 BOX (`.bento-media`, sized via `aspect-ratio`
+// like any normal element) with `object-fit:cover` on the `<img>` inside
+// it — cover crops to fill that box exactly, so the visible photo really
+// is 16:9 no matter the source photo's own proportions. `mediaFit` decides
+// which axis `.bento-media` sizes itself against (width=100% for a taller
+// card → letterbox top/bottom; height=100% for a shorter/wider card →
+// pillarbox left/right) — the fallback div goes through the exact same
+// wrapper, so both cases stay visually identical.
+export interface BentoItem {
+  label: string;
+  href: string;
+  image: string | null;
+  cat: string;
+  span: number;
+  anchor: boolean;
+}
+export interface Props {
+  items: BentoItem[];
+  columns: number;
+  gap?: number;
+  /** Card aspect-ratio for `anchor` tiles — default 16/9 (Section 1). */
+  cardAspect?: string;
+  /** Which axis the no-image fallback box sizes itself against: "width"
+   * (100% wide, height follows — letterbox top/bottom, taller cards) or
+   * "height" (100% tall, width follows — pillarbox left/right, shorter/
+   * wider cards, e.g. Section 2 after its 50% height cut). */
+  mediaFit?: "width" | "height";
+  /** "overlay" (default, Section 1): image fills the card, title/CTA sit in
+   * a gradient overlay ON TOP of the image, bottom-anchored.
+   * "stacked" (Section 2, round 7 — Siraphob: "รูปเล็กลงอีก 50%
+   * และตัวหนังสืออยู่ด้านบนรูป"): title sits as plain text ABOVE the image
+   * in normal flow, image is a separate, smaller (`mediaScale`) block below
+   * it — not an overlay on the photo at all. */
+  layout?: "overlay" | "stacked";
+  /** Stacked layout only: media height as a fraction of the tile's own
+   * height. Default 0.5 (Section 2's "another 50% smaller"). */
+  mediaScale?: number;
+}
+const { items, columns, gap = 12, cardAspect = "16 / 9", mediaFit = "width", layout = "overlay", mediaScale = 0.5 } = Astro.props;
+const isStacked = layout === "stacked";
+---
+
+<div class:list={["bento-grid", mediaFit === "height" && "fit-height", isStacked && "is-stacked"]} style={`grid-template-columns: repeat(${columns}, 1fr); gap: ${gap}px;`}>
+  {items.map((it) => (
+    <a class:list={["bento-tile", it.anchor && "is-anchor", isStacked && "is-stacked"]} href={it.href} style={`grid-column: span ${it.span}; ${it.anchor ? `aspect-ratio: ${cardAspect};` : ""} ${isStacked ? `--media-scale: ${mediaScale * 100}%;` : ""}`}>
+        {isStacked && <span class="tile-title-top">{it.label}</span>}
+        <div class="bento-media">
+          {it.image ? (
+            <img src={it.image} alt={it.label} loading="lazy" />
+          ) : (
+            <div class="tile-fallback" aria-hidden="true"></div>
+          )}
+          {isStacked && <span class="tile-cat">{it.cat}</span>}
+        </div>
+        {!isStacked && (
+          <>
+            <span class="tile-cat">{it.cat}</span>
+            <div class="hero-overlay">
+              <span class="btn btn-outline">รายละเอียด</span>
+              <span class="hero-title">{it.label}</span>
+            </div>
+          </>
+        )}
+    </a>
+  ))}
+</div>
+
+<style>
+  .bento-grid {
+    display: grid;
+  }
+  .bento-tile {
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    background: var(--em-neutral-bg);
+  }
+  a.bento-tile:hover {
+    text-decoration: none;
+  }
+  /* The forced-16:9 box — see the frontmatter comment for why this can't
+     just be `aspect-ratio` on the `<img>` directly. Sized against width by
+     default (letterbox top/bottom, bottom-anchored — Siraphob round 7:
+     "รูปต้องอยู่กลางล่างของ card"); `.fit-height` (Section 2) sizes against
+     height instead (pillarbox left/right, vertically centered — see the
+     `.fit-height .bento-tile` override below). */
+  .bento-media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    flex: none;
+  }
+  .bento-grid.fit-height .bento-tile {
+    align-items: center;
+  }
+  .bento-grid.fit-height .bento-media {
+    width: auto;
+    height: 100%;
+  }
+  .bento-media img,
+  .bento-media .tile-fallback {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* Stacked layout (Section 2, round 7 — Siraphob: "รูปเล็กลงอีก 50% และ
+     ตัวหนังสืออยู่ด้านบนรูป (ใน card)"). Card becomes a column: title text
+     in normal flow up top, then a SMALLER image below it — not an overlay
+     on top of the photo at all, unlike the default "overlay" layout above.
+     `--media-scale` (set inline per tile, default 0.5) is the image's
+     height as a fraction of the tile's own height; width follows via the
+     16:9 aspect-ratio on `.bento-media` itself. */
+  .bento-tile.is-stacked {
+    flex-direction: column;
+    align-items: center;
+    /* space-between (not center) — Siraphob round 8: "รูปไม่ชิดกลางล่าง".
+       Title pins to the top, image pins to the bottom (still horizontally
+       centered), with the flexible space living in the gap BETWEEN them
+       instead of splitting evenly above the title and below the image. */
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+  .bento-tile.is-stacked .tile-title-top {
+    color: var(--em-ink);
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-align: center;
+  }
+  .bento-tile.is-stacked .bento-media {
+    width: auto;
+    height: var(--media-scale, 50%);
+    border-radius: calc(var(--radius) * 0.6);
+  }
+  .tile-fallback {
+    background: linear-gradient(135deg, var(--em-yellow) 0%, var(--em-yellow-dark) 100%);
+  }
+  .tile-cat {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    background: rgba(0, 0, 0, 0.55);
+    color: var(--em-white);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .hero-overlay {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0) 70%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hero-overlay .btn-outline {
+    color: var(--em-white);
+    border-color: var(--em-white);
+    flex: none;
+  }
+  .hero-title {
+    color: var(--em-white);
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+</style>

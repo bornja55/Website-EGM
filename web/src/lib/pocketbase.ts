@@ -57,6 +57,9 @@ export interface Workshop {
   // Migration 10 — opt-in corner label, also the wide 2:1 tile trigger on
   // /workshops (see CourseGrid.astro's own badge for the course-side twin).
   badge?: string;
+  // Migration 12 — "1 วัน" | "1 หลักสูตร", drives the two-row split on
+  // /services' ตอนนี้เวิร์กช็อป section. Optional/empty until set per record.
+  duration_type?: string;
 }
 
 export interface Promotion {

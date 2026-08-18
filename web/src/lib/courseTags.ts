@@ -51,9 +51,19 @@ export const TAGS: TagDef[] = [
   // ติวสอบ — only real, existing exam-prep courses.
   { value: "ติวสอบเข้า ม.1", group: "exam", slug: "entrance-m1" }, // has a space
   { value: "TGAT & A-Level", group: "exam", slug: "tgat-a-level" }, // space + "&"
+  { value: "TOEIC", group: "exam" },
+  { value: "IELTS", group: "exam" },
+  { value: "TOEFL", group: "exam" },
+  { value: "ตะลุยสอบ ด่วนพิเศษ", group: "exam", slug: "express-cram" }, // has a space
 
-  // รูปแบบ — cuts across subjects.
+  // รูปแบบ — cuts across subjects. Every course carries exactly one of
+  // เรียนกลุ่ม/ตัวต่อตัว (never both) plus onsite, and online too if it's the
+  // ตัวต่อตัว course (see migration 11 + the data patch script for exactly
+  // which courses get which — decided 2026-08-16).
   { value: "ตัวต่อตัว", group: "format" },
+  { value: "เรียนกลุ่ม", group: "format" },
+  { value: "online", group: "format" },
+  { value: "onsite", group: "format" },
 ];
 
 /** Column headings for the mega-menu, in display order. */

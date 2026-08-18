@@ -1,0 +1,275 @@
+---
+// Shared photo-tile row — used by every /services category row except อื่นๆ
+// (which keeps its own bespoke .grade-tile markup directly in services.astro;
+// see that section's comment for why). Extracted here once รายวิชา/รูปแบบ/
+// เวิร์กช็อป/ติวสอบ/ชั้นปี all converged on the same visual language
+// (Siraphob, 2026-08-16 round 4): 16:9 photo, a small "cat." badge top-left
+// naming the GROUP (not the specific value), a "รายละเอียด" pill + the
+// value's own title bottom-left.
+//
+// Tile-sizing model (rewritten per HANDOFF-services-tile-sizing.md,
+// 2026-08-17): every tile in a row is the SAME width — the edge tile is
+// CLIPPED by the scroll container, not resized down. Confirmed live against
+// apple.com/'s own "Endless entertainment." gallery (media-gallery-item):
+// uniform item width, ancestor clips the overflow, no proportional
+// resizing. Siraphob's correction, verbatim: "ที่บอก 50% คือตัดรูปแสดงผลออก
+// เลย ไม่ใช่ปรับขนาดให้เหลือ 50%".
+//
+// pageSize now means "how many FULL tiles are visible per screen" rather
+// than a hard page-chunk size — items scroll continuously (native
+// overflow-x + scroll-snap, no more chunk()/RATIO fr-grid/.tile-page
+// wrapper). PEEK is the fraction of one extra tile revealed at the trailing
+// edge before it gets clipped by the container: confirmed by Siraphob as
+// 33% for 3-tile rows, 50% for the 5-tile ชั้นปี row. Tile width is solved
+// via CSS calc() so this ratio holds at any viewport width:
+//   W = (100% - N*gap) / (N + peek)
+//
+// nav="arrow": the single round auto-hiding button (apple.com/shop/buy-mac's
+// own "All models." control) — the default, used everywhere except the
+// merged ติวสอบ/ชั้นปี section.
+// nav="pill": prev/dots/next capsule (ProductTabs.astro's own "รูป" tab
+// control) — Siraphob explicitly asked for this back for that section
+// ("เอาแถบเลื่อนของฉันกลับมา"). Dots now represent groups of `pageSize`
+// tiles (a "screen's worth") rather than the old hard page chunks — every
+// pageSize-th tile carries `data-carousel-item` as a group-boundary marker
+// so the existing dot/scroll-position JS in services.astro keeps working
+// unchanged.
+//
+// Both nav wiring scripts live in services.astro's own <script> (page-level,
+// document.querySelectorAll) rather than here, so they wire every TileRow
+// instance on the page in one pass instead of re-registering per instance.
+export interface Props {
+  items: { label: string; href: string; image: string | null }[];
+  cat: string;
+  pageSize?: 3 | 5;
+  nav?: "arrow" | "pill";
+}
+const { items, cat, pageSize = 3, nav = "arrow" } = Astro.props;
+
+const PEEK = pageSize === 5 ? 0.5 : 0.33;
+const GAP = 16;
+// W = (100% - N*gap) / (N + peek)
+const tileWidth = `calc((100% - ${pageSize * GAP}px) / ${pageSize + PEEK})`;
+const groupCount = Math.ceil(items.length / pageSize);
+---
+
+{items.length > 0 && (
+  <div class="row-wrap" data-carousel={nav === "pill" ? "pill" : undefined}>
+    <div class="card-row is-gallery" data-carousel-track style={`--tile-w: ${tileWidth};`}>
+      {items.map((it, i) => (
+        <a
+          class="hero-tile"
+          href={it.href}
+          data-carousel-item={i % pageSize === 0 ? "" : undefined}
+        >
+          {it.image ? (
+            <img src={it.image} alt={it.label} loading="lazy" />
+          ) : (
+            <div class="tile-fallback" aria-hidden="true"></div>
+          )}
+          <span class="tile-cat">{cat}</span>
+          <div class="hero-overlay">
+            <span class="btn btn-outline">รายละเอียด</span>
+            <span class="hero-title">{it.label}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    {groupCount > 1 && nav === "arrow" && (
+      <button type="button" class="gallery-arrow gallery-next" aria-label="ดูเพิ่มเติม">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      </button>
+    )}
+
+    {groupCount > 1 && nav === "pill" && (
+      <div class="carousel-nav">
+        <button class="carousel-arrow" type="button" aria-label="ก่อนหน้า" data-carousel-prev>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+        <div class="carousel-dots" role="tablist">
+          {Array.from({ length: groupCount }).map((_, i) => (
+            <button class="carousel-dot" type="button" data-carousel-dot aria-label={`ไปที่หน้าที่ ${i + 1}`} role="tab" aria-selected={i === 0}></button>
+          ))}
+        </div>
+        <button class="carousel-arrow" type="button" aria-label="ถัดไป" data-carousel-next>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
+<style>
+  .row-wrap {
+    position: relative;
+    margin-top: 16px;
+  }
+  .is-gallery {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 0.25rem;
+  }
+  .is-gallery::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Uniform tile width per row (--tile-w, set inline per instance) — the
+     trailing tile is CLIPPED by this container's own overflow-x, never
+     resized. This is what keeps a row's height constant regardless of
+     pageSize: aspect-ratio is always computed off the same --tile-w, not a
+     fr-column width that used to shrink/grow with item count. */
+  .hero-tile {
+    position: relative;
+    flex: 0 0 var(--tile-w);
+    width: var(--tile-w);
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: block;
+    scroll-snap-align: start;
+  }
+  a.hero-tile:hover {
+    text-decoration: none;
+  }
+  .hero-tile img,
+  .hero-tile .tile-fallback {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .tile-fallback {
+    background: linear-gradient(135deg, var(--em-yellow) 0%, var(--em-yellow-dark) 100%);
+  }
+  /* cat. badge — Siraphob, round 4: "เอา cat. ใส่ที่มุมซ้ายบน ของทุกรูปแทน".
+     Names the GROUP (รายวิชา/รูปแบบ/ติวสอบ/ชั้นปี/Workshop 1 วัน/...), not the
+     specific value — the value itself is the title text bottom-left. */
+  .tile-cat {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+    background: rgba(0, 0, 0, 0.55);
+    color: var(--em-white);
+    border-radius: 999px;
+    padding: 0.3rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .hero-overlay {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    padding: 1rem 1.25rem;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0) 70%);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .hero-overlay .btn-outline {
+    color: var(--em-white);
+    border-color: var(--em-white);
+    flex: none;
+  }
+  .hero-title {
+    color: var(--em-white);
+    font-weight: 700;
+    font-size: 1.05rem;
+  }
+
+  /* Round button riding the row's right edge, apple.com/shop/buy-mac's own
+     "All models." control. */
+  .gallery-arrow {
+    position: absolute;
+    top: 50%;
+    right: -18px;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: var(--em-white);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--em-ink);
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .gallery-arrow:hover {
+    background: var(--em-neutral-bg);
+  }
+  .gallery-arrow svg {
+    width: 20px;
+    height: 20px;
+  }
+  .gallery-arrow.is-hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  @media (max-width: 700px) {
+    .gallery-arrow {
+      display: none;
+    }
+  }
+
+  /* Pill nav — restored from ProductTabs.astro's own "รูป" tab control per
+     Siraphob's explicit request ("เอาแถบเลื่อนของฉันกลับมา"). */
+  .carousel-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--em-neutral-bg);
+    border-radius: 999px;
+    padding: 0.4rem 0.5rem;
+    margin: 0.75rem auto 0;
+    width: fit-content;
+  }
+  .carousel-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: none;
+    color: var(--em-ink);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .carousel-arrow:hover {
+    background: rgba(43, 43, 43, 0.08);
+  }
+  .carousel-arrow svg {
+    width: 18px;
+    height: 18px;
+  }
+  .carousel-dots {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0 0.35rem;
+  }
+  .carousel-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: none;
+    padding: 0;
+    background: rgba(43, 43, 43, 0.25);
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .carousel-dot.is-active {
+    background: var(--em-ink);
+    transform: scale(1.3);
+  }
+</style>
