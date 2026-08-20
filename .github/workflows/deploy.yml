@@ -16,8 +16,8 @@ jobs:
           GCP_SSH_KEY: ${{ secrets.GCP_SSH_KEY }}
           GCP_SSH_HOST: ${{ secrets.GCP_SSH_HOST }}
         run: |
-          # Secrets come in via `env:` + $VAR, not inlined as ${{ }} directly
-          # into this script. Inlining substitutes raw text into the shell
+          # Secrets come in via `env:` + $VAR, not inlined directly into this
+          # script as GitHub expression syntax. Inlining substitutes raw text into the shell
           # script before it runs — a secret containing a quote, backtick, or
           # $(...) would break the script or worse. $VAR is the safe way
           # GitHub's own docs recommend. Applies to every step below too.
