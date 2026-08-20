@@ -1,0 +1,46 @@
+# Reverse proxy config for the `proxy` service in docker-compose.yml.
+# Added 2026-08-20 to make PUBLIC_POCKETBASE_URL's documented `.../pb` path
+# (README's secrets table) actually route somewhere — before this, nothing
+# in the stack proxied PocketBase under a path, so that env var was
+# aspirational only.
+#
+# `auto_https off` — Caddy normally tries to provision TLS automatically for
+# any site block that looks like a real domain. Not wanted here: TLS
+# terminates at Cloudflare (Flexible SSL — see CLAUDE.md's TLS decision),
+# this container only ever speaks plain HTTP on the port GCP's firewall
+# actually opens (scripts/provision-gcp-vm.sh → port 80 only, never 443).
+{
+	auto_https off
+}
+
+:80 {
+	# `handle_path` (not `handle`) strips the /pb prefix before proxying, so
+	# PocketBase sees the request as if it owned the domain root — e.g.
+	# /pb/api/collections/courses/records -> pb container sees
+	# /api/collections/courses/records, exactly what it expects natively.
+	# Verified against a real Caddy binary + stub upstreams before shipping
+	# this (not just read — the prefix-stripping behavior is easy to get
+	# backwards with `handle` vs `handle_path`).
+	handle_path /pb/* {
+		reverse_proxy pb:8090
+	}
+
+	# KNOWN LIMITATION: PocketBase's own admin UI (/pb/_/) will load its
+	# first HTML page fine through this path (path gets stripped, pb serves
+	# it), but that page's own JS/CSS bundle references absolute asset paths
+	# rooted at "/" (e.g. /_/assets/main.js), NOT "/pb/_/assets/main.js" —
+	# PocketBase has no concept of being served under a sub-path. Those
+	# follow-up requests will miss this handle_path block entirely and fall
+	# through to the `handle` block below (the Astro app), which doesn't
+	# have those routes either -> broken admin UI through the public path.
+	# The REST API itself (/pb/api/...) doesn't have this problem — it's
+	# just data, no embedded absolute links — so file downloads and any
+	# client-side PocketBase API calls work fine through /pb/*.
+	# For the admin UI, use the SSH tunnel instead (see docker-compose.yml's
+	# comment on the `pb` service's port mapping) — that hits PocketBase at
+	# its own real root, where all its absolute paths resolve correctly.
+
+	handle {
+		reverse_proxy web:4321
+	}
+}

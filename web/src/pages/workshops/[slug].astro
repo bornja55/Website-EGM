@@ -2,6 +2,7 @@
 export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ProductTabs from "../../components/ProductTabs.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import {
   getWorkshop,
   getCourseSections,
@@ -36,7 +37,10 @@ const [sections, pinnedImages, tagMatchedImages, reviews] = await Promise.all([
 const summaryStats = buildWorkshopStats(workshop);
 ---
 
-<BaseLayout title={workshop.title} description={workshop.tagline || workshop.title}>
+<BaseLayout title={workshop.title} description={workshop.tagline || workshop.title} image={workshop.cover_image}>
+  <div class="container">
+    <Breadcrumbs items={[{ label: "เวิร์กช็อป", href: "/workshops" }, { label: workshop.title }]} />
+  </div>
   <section class="container product-hero-content">
     <h1 class="product-heading">{workshop.title}</h1>
     {workshop.tagline && <p class="product-tagline">{workshop.tagline}</p>}

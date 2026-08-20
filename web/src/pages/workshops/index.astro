@@ -6,7 +6,10 @@ import { getActiveWorkshops } from "../../lib/pocketbase";
 const workshops = await getActiveWorkshops().catch(() => []);
 ---
 
-<BaseLayout title="เวิร์กช็อป/กิจกรรม">
+<BaseLayout
+  title="เวิร์กช็อป/กิจกรรม"
+  description="เวิร์กช็อปและกิจกรรมพิเศษจาก English Mania by KruYam ที่นั่งจำกัด จองผ่าน LINE เท่านั้น"
+>
   <section class="section hero-text">
     <div class="container">
       <h1 class="hero-heading">เวิร์กช็อป &amp; กิจกรรม</h1>

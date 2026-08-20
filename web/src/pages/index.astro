@@ -7,18 +7,41 @@ import {
   getCourses,
   getActiveWorkshops,
   getSiteSettings,
+  getTutors,
 } from "../lib/pocketbase";
 import { buildCatalog } from "../lib/catalog";
 import type { CatalogItem } from "../lib/catalog";
 import { buildMenuGroups } from "../lib/courseTags";
 
-const [promotions, testimonials, courses, workshops, settings] = await Promise.all([
+const [promotions, testimonials, courses, workshops, settings, tutors] = await Promise.all([
   getActivePromotions().catch(() => []),
   getTestimonials().catch(() => []),
   getCourses().catch(() => []),
   getActiveWorkshops().catch(() => []),
   getSiteSettings().catch(() => null),
+  getTutors().catch(() => []),
 ]);
+
+// "รู้จักติวเตอร์ของเรา" — same `tutors` collection /team already reads.
+// Siraphob asked 2026-08-18 to feature ครูแยม (the brand's lead tutor) AND
+// ติวเตอร์นุ่น specifically, in that order — not just whoever sort_order
+// puts first. Falls back to the first 2 by sort_order if either name is ever
+// renamed/removed in PocketBase, so the section never breaks.
+const FEATURED_TUTOR_NAMES = ["แยม", "นุ่น"];
+const featuredTutors = FEATURED_TUTOR_NAMES
+  .map((n) => tutors.find((t) => t.name?.includes(n)))
+  .filter((t): t is NonNullable<typeof t> => Boolean(t));
+const displayTutors = featuredTutors.length > 0 ? featuredTutors : tutors.slice(0, 2);
+
+// Confirmed 2026-08-18 by Siraphob: Google Maps listing (5.0 ★ / 44 reviews,
+// screenshot) + old site (ballevrtgab.makeweb.co, opened 2012/2013 per two
+// slightly different sources — "13+" is safe under either). Coordinates are
+// from the Maps share link he sent, used for both the embed and (later) any
+// geo schema — do not re-derive these from the text address, there isn't a
+// full street address on file anywhere in the project yet.
+const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/rRxUoHtnhnBhbWwF7";
+const MAP_LAT = 13.8791098;
+const MAP_LNG = 100.4042499;
 
 // "คอร์สแนะนำ" — promotions + courses + workshops together, 3 columns x 2
 // rows (Siraphob: the separate promo banner + a 2-column course grid read as
@@ -73,7 +96,10 @@ const otherServices: CatalogItem[] = [
 ];
 ---
 
-<BaseLayout title="หน้าแรก">
+<BaseLayout
+  title="สถาบันสอนพิเศษภาษาอังกฤษ คณิตศาสตร์ วิทยาศาสตร์"
+  description="English Mania by KruYam สถาบันสอนพิเศษภาษาอังกฤษ คณิตศาสตร์ วิทยาศาสตร์ ตัวต่อตัวและกลุ่มเล็ก มีคอร์สเรียน โปรโมชั่น และเวิร์กช็อปหลากหลาย จองคิวเรียนผ่าน LINE ได้ทันที"
+>
   {/* The one deliberate yellow accent moment on this page, per DESIGN.md —
       everywhere else uses white/neutral so this hero actually stands out
       instead of being one of several yellow bands. Two CTAs now, not one —
@@ -94,6 +120,31 @@ const otherServices: CatalogItem[] = [
     </div>
     <div class="hero-decor hero-decor-1" aria-hidden="true"></div>
     <div class="hero-decor hero-decor-2" aria-hidden="true"></div>
+  </section>
+
+  {/* Trust stat strip — plain typographic numbers, no boxed/shadow cards
+      (per project convention: generic AI-style card grids were explicitly
+      rejected). Numbers confirmed with Siraphob 2026-08-18: opening date
+      2012/2013 (two slightly different sources, "13+" is safe either way),
+      2,000+ families from the old site's own copy, 5.0/44 from a live Google
+      Maps screenshot he sent — none of this is invented. */}
+  <section class="stats-bar">
+    <div class="container-wide stats-row">
+      <div class="stat-item">
+        <span class="stat-number">13+</span>
+        <span class="stat-label">ปีที่เปิดสอน</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <div class="stat-item">
+        <span class="stat-number">2,000+</span>
+        <span class="stat-label">ครอบครัวไว้วางใจ</span>
+      </div>
+      <div class="stat-divider" aria-hidden="true"></div>
+      <a class="stat-item stat-item-link" href={GOOGLE_MAPS_URL} target="_blank" rel="noopener">
+        <span class="stat-number">5.0 &#9733;</span>
+        <span class="stat-label">จาก 44 รีวิว Google</span>
+      </a>
+    </div>
   </section>
 
   {/* คอร์สแนะนำ — promotions + courses + workshops together, 3 columns x 2
@@ -181,6 +232,42 @@ const otherServices: CatalogItem[] = [
     </section>
   )}
 
+  {/* รู้จักติวเตอร์ของเรา — Siraphob rejected the first pass (fused split
+      card) 2026-08-18, then asked to feature 2 tutors (ครูแยม + ติวเตอร์นุ่น)
+      instead of 1. This now reuses `/team.astro`'s `.tutor-card` markup AND
+      styling exactly (circular photo, name, education, subject badges, THEN
+      the bulleted `credentials` block via set:html) — not a new pattern,
+      literally the same card component's CSS copied in, shown for a curated
+      2-person subset instead of the full team grid. */}
+  {displayTutors.length > 0 && (
+    <section class="section">
+      <div class="container-wide">
+        <div class="section-header">
+          <h2>รู้จักติวเตอร์ของเรา</h2>
+          <p>คัดสรรจากวุฒิการศึกษาและประสบการณ์สอนจริง</p>
+        </div>
+        <div class="grid grid-3">
+          {displayTutors.map((t) => (
+            <div class="card tutor-card">
+              {t.photo && <img class="tutor-photo" src={t.photo} alt={t.name} loading="lazy" />}
+              <h3>{t.name}</h3>
+              {t.education && <p class="tutor-education">{t.education}</p>}
+              {t.subjects && (
+                <div class="tutor-subjects">
+                  {t.subjects.split(",").map((s) => (
+                    <span class="badge subject-badge">{s.trim()}</span>
+                  ))}
+                </div>
+              )}
+              {t.credentials && <div class="tutor-credentials" set:html={t.credentials} />}
+            </div>
+          ))}
+        </div>
+        <p class="see-all-courses"><a href="/team">ดูทีมติวเตอร์ทั้งหมด &rarr;</a></p>
+      </div>
+    </section>
+  )}
+
   {/* บริการอื่นๆ — the school's non-teaching services, same .tile as the two
       grids above (Siraphob: "อยากได้เป็นกล่องๆ เหมือนตัวอย่าง") — bypasses
       CourseGrid here so all three homepage grids share one card style
@@ -246,6 +333,31 @@ const otherServices: CatalogItem[] = [
       </div>
     </section>
   )}
+
+  {/* แผนที่และการเดินทาง — coordinates are from the Google Maps share link
+      Siraphob sent (2026-08-18), embedded with the same key-less
+      `?q=<lat>,<lng>&output=embed` pattern already established in
+      `pocketbase/seed.mjs` for the address field. No street address on file
+      yet, so this uses coordinates rather than a text query. */}
+  <section class="section section-neutral">
+    <div class="container-wide">
+      <div class="section-header">
+        <h2>แผนที่และการเดินทาง</h2>
+        <p>ตลาดบางใหญ่ ตรงข้าม Central Westgate ใกล้ MRT บางใหญ่</p>
+      </div>
+      <div class="map-embed">
+        <iframe
+          src={`https://www.google.com/maps?q=${MAP_LAT},${MAP_LNG}&output=embed`}
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="แผนที่ English Mania by KruYam"
+        ></iframe>
+      </div>
+      <p class="map-cta">
+        <a class="btn btn-outline" href={GOOGLE_MAPS_URL} target="_blank" rel="noopener">เปิดใน Google Maps</a>
+      </p>
+    </div>
+  </section>
 
   {/* Closing CTA band — apple.com's dark "let's talk" close before the
       footer: one headline, one action, nothing else competing for attention. */}
@@ -533,5 +645,122 @@ const otherServices: CatalogItem[] = [
   .closing-cta p {
     color: rgba(255, 255, 255, 0.7);
     margin: 0.75rem 0 2rem;
+  }
+
+  /* Trust stat strip — deliberately NOT a card grid (no border, no
+     box-shadow): per project convention, boxed/shadow-card grids read as
+     generic AI output. Just typography, on a plain neutral band. */
+  .stats-bar {
+    background: var(--em-neutral-bg);
+    padding: 2.25rem 0;
+  }
+  .stats-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+    text-align: center;
+  }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    color: inherit;
+    text-decoration: none;
+  }
+  .stat-item-link:hover .stat-number {
+    text-decoration: underline;
+  }
+  .stat-number {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--em-ink);
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 0.9rem;
+    color: rgba(43, 43, 43, 0.7);
+  }
+  .stat-divider {
+    width: 1px;
+    height: 2.5rem;
+    background: rgba(43, 43, 43, 0.15);
+  }
+  @media (max-width: 640px) {
+    .stat-divider {
+      display: none;
+    }
+    .stats-row {
+      gap: 1.75rem;
+    }
+  }
+
+  /* รู้จักติวเตอร์ของเรา — CSS copied straight from team.astro's `.tutor-card`
+     family (same class names; Astro scopes per-file so there's no collision)
+     so the homepage teaser is pixel-identical to the approved /team design,
+     not a new pattern. Siraphob rejected the earlier fused split-card layout
+     outright 2026-08-18 ("เลย์เอาต์/ทรงการ์ดทั้งหมด" was the problem). */
+  .tutor-card {
+    text-align: center;
+  }
+  .tutor-photo {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 1.25rem;
+    display: block;
+    box-shadow: var(--shadow);
+  }
+  .tutor-education {
+    color: rgba(43, 43, 43, 0.7);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+  }
+  .tutor-subjects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    justify-content: center;
+    margin-top: 0.9rem;
+  }
+  .tutor-subjects .subject-badge {
+    background: var(--em-neutral-bg);
+    color: var(--em-ink);
+  }
+  .tutor-credentials {
+    text-align: left;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: 0.88rem;
+    color: rgba(43, 43, 43, 0.8);
+  }
+  .tutor-credentials :global(ul) {
+    margin: 0;
+    padding-left: 1.1rem;
+  }
+  .tutor-credentials :global(li) {
+    margin-bottom: 0.35rem;
+  }
+
+  /* แผนที่และการเดินทาง — plain embed, matches the site's existing
+     "media in a rounded box, no card chrome" treatment rather than a new
+     pattern. */
+  .map-embed {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid rgba(43, 43, 43, 0.08);
+  }
+  .map-embed iframe {
+    width: 100%;
+    height: 360px;
+    display: block;
+    border: 0;
+  }
+  .map-cta {
+    text-align: center;
+    margin-top: 1.75rem;
   }
 </style>

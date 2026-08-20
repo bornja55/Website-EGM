@@ -1,0 +1,114 @@
+---
+// TEMPORARY preview-only page — NOT part of the real site. Renders the exact
+// same markup as blog/[slug].astro with a hardcoded mock post so the design
+// can be screenshotted before real blog_posts data exists in PocketBase.
+// Delete this file once verified.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const post = {
+  title: "สรุปหลักแกรมม่าเบื้องต้น ป.4-6 ที่ต้องรู้ก่อนสอบเข้า ม.1",
+  excerpt: "รวมหลักแกรมม่าที่เจอบ่อยที่สุดในข้อสอบเข้า ม.1 อธิบายง่ายๆ พร้อมตัวอย่างประโยคที่ใช้ได้จริง",
+  cover_image: "/images/services-tutoring.jpg",
+  published_at: "2026-08-10",
+  content: `
+    <p>เด็กๆ ที่เตรียมสอบเข้า ม.1 มักจะเจอโจทย์แกรมม่าซ้ำๆ กันทุกปี บทความนี้สรุปหลักที่ออกสอบบ่อยที่สุด อธิบายแบบเข้าใจง่าย ไม่ต้องท่องจำเยอะ</p>
+    <h2>Present Perfect ใช้เมื่อไหร่</h2>
+    <p>โครงสร้าง Subject + have/has + V3 ใช้พูดถึงเหตุการณ์ที่เริ่มในอดีตแต่ยังเกี่ยวข้องกับปัจจุบัน หรือเพิ่งเกิดขึ้นโดยไม่ระบุเวลาชัดเจน</p>
+    <blockquote>ตัวอย่าง: I have already finished my homework. (ทำการบ้านเสร็จแล้ว ณ ตอนนี้)</blockquote>
+    <h2>Present Simple vs Present Continuous</h2>
+    <p>Present Simple ใช้กับสิ่งที่ทำเป็นประจำ ส่วน Present Continuous ใช้กับสิ่งที่กำลังทำอยู่ตอนนี้ — จุดที่เด็กสับสนบ่อยคือกริยาที่แสดงความรู้สึก (like, want, know) ปกติจะไม่ใช้รูป -ing</p>
+    <p>อยากได้แบบฝึกหัดเพิ่มเติมและตะลุยโจทย์แบบจับเวลาจริง สมัครคอร์สติวสอบเข้า ม.1 กับ English Mania ได้เลย</p>
+  `,
+};
+const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+function thaiDate(iso: string) {
+  const d = new Date(iso);
+  return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+const publishedLabel = thaiDate(post.published_at);
+---
+
+<BaseLayout title={post.title} description={post.excerpt || post.title}>
+  <section class="container product-hero-content post-hero">
+    <a class="back-link" href="/blog">← บทความทั้งหมด</a>
+    <h1 class="product-heading post-heading">{post.title}</h1>
+    {publishedLabel && (
+      <div class="product-meta">
+        <span class="product-detail-pill">{publishedLabel}</span>
+      </div>
+    )}
+  </section>
+
+  {post.cover_image && (
+    <section class="product-hero-media">
+      <img src={post.cover_image} alt={post.title} loading="eager" />
+    </section>
+  )}
+
+  <article class="section post-body container">
+    <div set:html={post.content} />
+  </article>
+
+  <section class="section section-neutral post-cta">
+    <div class="container post-cta-inner">
+      <h2 class="post-cta-heading">สนใจเรียนกับ English Mania?</h2>
+      <p class="post-cta-sub">ทักไลน์คุยรายละเอียดคอร์สและตารางเรียนได้เลย</p>
+      <a class="btn btn-line" href="https://lin.ee/REPLACE_WITH_SANDBOX_OA" target="_blank" rel="noopener">จองผ่าน LINE</a>
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .post-hero {
+    position: relative;
+  }
+  .back-link {
+    display: inline-block;
+    color: rgba(43, 43, 43, 0.6);
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+  .back-link:hover {
+    color: var(--em-red);
+    text-decoration: none;
+  }
+  .post-heading {
+    margin-top: 1.5rem;
+  }
+  .post-body {
+    max-width: 44rem;
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+  .post-body :global(h2) {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid var(--em-red);
+    padding-left: 1rem;
+  }
+  .post-body :global(blockquote) {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    border-left: 4px solid var(--em-red);
+    background: var(--em-neutral-bg);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-style: italic;
+    font-size: 1.1rem;
+  }
+  .post-body :global(img) {
+    width: 100%;
+    border-radius: var(--radius);
+  }
+  .post-cta {
+    text-align: center;
+  }
+  .post-cta-heading {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin: 0 0 0.5rem;
+  }
+  .post-cta-sub {
+    color: rgba(43, 43, 43, 0.7);
+    margin: 0 0 1.5rem;
+  }
+</style>

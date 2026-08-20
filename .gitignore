@@ -9,6 +9,9 @@ npm-debug.log*
 .env.*
 !.env.example
 pocketbase/.credentials
+# scripts/provision-gcp-vm.sh writes the dedicated GitHub Actions deploy
+# keypair here (gcp-deploy-key / gcp-deploy-key.pub) — never commit it.
+secrets/
 
 # PocketBase runtime data + binary
 pocketbase/pb_data/

@@ -6,6 +6,7 @@
 // heading all live here rather than four times over.
 import BaseLayout from "../layouts/BaseLayout.astro";
 import CourseGrid from "./CourseGrid.astro";
+import Breadcrumbs from "./Breadcrumbs.astro";
 import { getCoursesByTag } from "../lib/pocketbase";
 import { courseToItem } from "../lib/catalog";
 import { GROUP_LABELS, tagFromSlug, type TagGroup } from "../lib/courseTags";
@@ -31,6 +32,9 @@ const courses = tag ? await getCoursesByTag(tag).catch(() => []) : [];
     title={`คอร์ส${GROUP_LABELS[group]} ${tag}`}
     description={`คอร์สเรียนของ English Mania by KruYam ในหมวด ${GROUP_LABELS[group]} ${tag}`}
   >
+    <div class="container">
+      <Breadcrumbs items={[{ label: "คอร์สเรียน", href: "/course" }, { label: tag }]} />
+    </div>
     <section class="section hero-text">
       <div class="container">
         <p class="eyebrow">{GROUP_LABELS[group]}</p>

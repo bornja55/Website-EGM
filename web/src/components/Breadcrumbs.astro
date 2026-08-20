@@ -1,0 +1,88 @@
+---
+// Shared breadcrumb: a visual trail + BreadcrumbList JSON-LD. Added per the
+// 2026-08-18 SEO audit's "still open" list — see
+// project_englishmania_seo_audit.md. Kept OUT of BaseLayout deliberately:
+// most pages (home, about, contact, services...) sit one level deep and a
+// "หน้าแรก > ติดต่อเรา" trail adds nothing there. Only pages that sit under a
+// real listing page (course/promotion/workshop/blog detail, course category
+// pages) get one, wired in per-page.
+export interface Crumb {
+  label: string;
+  /** Omit on the current page (last crumb) — it renders as plain text, not
+   * a link. The JSON-LD still gets a self-referencing URL for that entry
+   * (Astro.url.pathname), matching Google's own BreadcrumbList examples. */
+  href?: string;
+}
+
+interface Props {
+  /** Does NOT include "หน้าแรก" — this component always prepends it. */
+  items: Crumb[];
+}
+
+const { items } = Astro.props;
+const trail: Crumb[] = [{ label: "หน้าแรก", href: "/" }, ...items];
+
+const siteOrigin = Astro.site ?? new URL(Astro.url.origin);
+
+const breadcrumbSchema = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: trail.map((c, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: c.label,
+    item: new URL(c.href ?? Astro.url.pathname, siteOrigin).toString(),
+  })),
+};
+---
+
+<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+  <ol>
+    {trail.map((c, i) => (
+      <li>
+        {i > 0 && <span class="sep" aria-hidden="true">/</span>}
+        {c.href && i < trail.length - 1 ? (
+          <a href={c.href}>{c.label}</a>
+        ) : (
+          <span aria-current="page">{c.label}</span>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<style>
+  .breadcrumbs {
+    padding: 1rem 0 0;
+  }
+  .breadcrumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.85rem;
+  }
+  .breadcrumbs li {
+    display: flex;
+    align-items: center;
+  }
+  .breadcrumbs a {
+    color: rgba(43, 43, 43, 0.55);
+    text-decoration: none;
+  }
+  .breadcrumbs a:hover {
+    color: var(--em-red);
+    text-decoration: underline;
+  }
+  .breadcrumbs [aria-current="page"] {
+    color: var(--em-ink);
+    font-weight: 600;
+  }
+  .sep {
+    color: rgba(43, 43, 43, 0.35);
+    margin: 0 0.5rem;
+  }
+</style>

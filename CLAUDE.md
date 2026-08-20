@@ -94,8 +94,14 @@ this is now the single working copy.
 
 ## Decisions from the second planning round (2026-08-08)
 
-- **TLS**: Cloudflare Proxy mode (Full) — Cloudflare terminates HTTPS; the VM
-  serves plain HTTP behind it, port 443 is never opened on the VM itself.
+- **TLS**: Cloudflare Proxy mode, **Flexible** SSL — visitor↔Cloudflare is
+  HTTPS, Cloudflare↔VM is plain HTTP; the VM serves plain HTTP only, port 443
+  is never opened on the VM itself. (Corrected 2026-08-20: this doc previously
+  said "Full" here, which is wrong — Full/Full-strict both require the
+  ORIGIN to answer HTTPS on 443, which contradicts "port 443 is never
+  opened." Flexible is the mode that actually matches this VM's setup.
+  `scripts/provision-gcp-vm.sh` only opens port 80 in the firewall,
+  consistent with this.)
 - **Spam protection**: Cloudflare Turnstile on the contact form (free,
   unlimited requests, no per-verification cap). Implemented in
   `web/src/pages/contact.astro` (widget) and `web/src/pages/api/contact.ts`

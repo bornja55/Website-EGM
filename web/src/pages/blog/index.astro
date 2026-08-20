@@ -5,78 +5,237 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 const PB_URL = process.env.POCKETBASE_URL || "http://127.0.0.1:8090"; // see note in lib/pocketbase.ts
 const res = await fetch(`${PB_URL}/api/collections/blog_posts/records?sort=-published_at&perPage=50`).catch(() => null);
 const posts = res && res.ok ? (await res.json()).items : [];
+const [featured, ...rest] = posts;
+
+// Thai, Buddhist-era short date — "18 ส.ค. 2569" — matches how dates already
+// read elsewhere on the site (schedule pills etc. use Thai, not ISO).
+const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+function thaiDate(iso: string | null | undefined) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
 ---
 
-<BaseLayout title="บทความ">
+<BaseLayout title="บทความ" description="ความรู้ เคล็ดลับการเรียน และเรื่องราวจาก English Mania by KruYam">
   <section class="section hero-text">
     <div class="container">
       <h1 class="hero-heading">บทความ</h1>
-      {posts.length === 0 && <p class="hero-sub">ยังไม่มีบทความในตอนนี้</p>}
+      <p class="hero-sub">เคล็ดลับการเรียน อัปเดตคอร์ส และเรื่องราวจากห้องเรียน English Mania</p>
     </div>
   </section>
 
-  {posts.length > 0 && (
+  {posts.length === 0 ? (
+    <section class="section">
+      <div class="container">
+        <p class="blog-empty">ยังไม่มีบทความในตอนนี้ — กลับมาดูใหม่เร็วๆ นี้</p>
+      </div>
+    </section>
+  ) : (
     <section class="section section-neutral">
       <div class="container">
-        <div class="grid grid-3">
-          {posts.map((p: any) => (
-            <a class="card blog-card" href={`/blog/${p.slug}/`}>
-              {p.cover_image && (
-                <div class="blog-image">
-                  <img src={p.cover_image} alt={p.title} loading="lazy" />
-                </div>
+        <!-- Featured (latest) post — apple.com/support module pattern:
+             two panels of equal height sitting flush together (small gap,
+             not a gap-less grid list), text panel plain/flat on the left,
+             photo bleeding to the panel's own rounded edge on the right. No
+             box-shadow "card" here — the panel IS the card via background
+             color + radius only, per Siraphob's "ไม่ชอบดีไซน์ card
+             ทั่วไปแบบ AI" correction (2026-08-18). -->
+        {featured && (
+          <a class="featured-post" href={`/blog/${featured.slug}/`}>
+            <div class="featured-text">
+              {thaiDate(featured.published_at) && <span class="blog-date">{thaiDate(featured.published_at)}</span>}
+              <h2 class="featured-title">{featured.title}</h2>
+              {featured.excerpt && <p class="featured-excerpt">{featured.excerpt}</p>}
+              <span class="blog-readmore">อ่านต่อ →</span>
+            </div>
+            <div class="featured-media">
+              {featured.cover_image ? (
+                <img src={featured.cover_image} alt={featured.title} loading="eager" />
+              ) : (
+                <div class="blog-media-fallback" aria-hidden="true" />
               )}
-              <div class="blog-body">
-                <h2>{p.title}</h2>
-                {p.excerpt && <p>{p.excerpt}</p>}
-              </div>
-            </a>
-          ))}
-        </div>
+            </div>
+          </a>
+        )}
+
+        <!-- Remaining posts — the OTHER apple.com/support module pattern:
+             image is its own free-floating rounded card (no text inside,
+             no shadow), title/excerpt/date sit in plain flow BELOW and
+             OUTSIDE the card, centered — not a boxed "image + text card"
+             like a generic template grid. -->
+        {rest.length > 0 && (
+          <div class="blog-grid">
+            {rest.map((p: any) => (
+              <a class="blog-item" href={`/blog/${p.slug}/`}>
+                <div class="blog-media">
+                  {p.cover_image ? (
+                    <img src={p.cover_image} alt={p.title} loading="lazy" />
+                  ) : (
+                    <div class="blog-media-fallback" aria-hidden="true" />
+                  )}
+                </div>
+                <div class="blog-item-text">
+                  {thaiDate(p.published_at) && <span class="blog-date">{thaiDate(p.published_at)}</span>}
+                  <h3 class="blog-title">{p.title}</h3>
+                  {p.excerpt && <p class="blog-excerpt">{p.excerpt}</p>}
+                  <span class="blog-readmore">อ่านต่อ →</span>
+                </div>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   )}
 </BaseLayout>
 
 <style>
-  /* Ported from design/generated_screens/Blog Index - Mobile-MOBILE.html. */
   .hero-text {
     text-align: center;
+    padding-bottom: 1.5rem;
   }
   .hero-sub {
     color: rgba(43, 43, 43, 0.7);
-    margin-top: 1rem;
+    margin-top: 0.75rem;
+    font-size: 1.1rem;
   }
-  .grid {
-    display: grid;
-    gap: 1.5rem;
+  .blog-empty {
+    text-align: center;
+    color: rgba(43, 43, 43, 0.6);
+    padding: 2rem 0;
   }
-  .grid-3 {
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  }
-  .blog-card {
-    padding: 0;
-    overflow: hidden;
+  .blog-date {
     display: block;
-    color: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--em-red);
+    margin-bottom: 0.5rem;
   }
-  .blog-card:hover {
+  .blog-readmore {
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--em-red);
+  }
+  .blog-media-fallback {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--em-yellow) 0%, var(--em-yellow-dark) 100%);
+  }
+
+  /* Featured post — text panel + photo panel fused into ONE single rounded
+     card, no gap/seam (same merge fix as the article-body .content-split
+     module — Siraphob correction 2026-08-18: "2card ต้องติดกันเหมือนเป็น
+     card เดียวกัน"). Radius/clip lives on the outer .featured-post only. */
+  .featured-post {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    color: inherit;
+    margin-bottom: 3.5rem;
+  }
+  .featured-post:hover {
     text-decoration: none;
   }
-  .blog-image {
-    aspect-ratio: 16 / 9;
+  .featured-text {
+    background: var(--em-white);
+    padding: clamp(2rem, 4vw, 3.5rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
-  .blog-image img {
+  .featured-title {
+    font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0 0 0.9rem;
+  }
+  .featured-excerpt {
+    color: rgba(43, 43, 43, 0.7);
+    font-size: 1.02rem;
+    line-height: 1.6;
+    margin: 0 0 1.1rem;
+  }
+  /* Photo panel forced to a strict 1:1 square (Siraphob correction
+     2026-08-18: "ขนาดรูปต้องเป็น 1:1 เท่านั้น" — same rule as the
+     article-body .content-split-media module), positioned at the top of
+     the row rather than stretched. If the text panel ends up taller, the
+     leftover space below the square photo shows the same white tint as
+     .featured-text so it still reads as one continuous card. */
+  .featured-media {
+    align-self: start;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: var(--em-white);
+  }
+  .featured-media img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    transition: transform 0.4s ease;
   }
-  .blog-body {
-    padding: 1.5rem;
+  .featured-post:hover .featured-media img {
+    transform: scale(1.03);
   }
-  .blog-body p {
+  @media (max-width: 720px) {
+    .featured-post {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Regular grid — free-floating image card, no shadow/box, text plain
+     and CENTERED below/outside it (matches apple.com/support's "More to
+     Explore" module: rounded photo card, then title/description as plain
+     text underneath, not wrapped in its own card frame). */
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 3rem 2.5rem;
+  }
+  .blog-item {
+    display: block;
+    color: inherit;
+    text-align: center;
+  }
+  .blog-item:hover {
+    text-decoration: none;
+  }
+  .blog-media {
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .blog-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+  .blog-item:hover .blog-media img {
+    transform: scale(1.04);
+  }
+  .blog-item-text {
+    padding: 1.25rem 0.5rem 0;
+  }
+  .blog-item-text .blog-date {
+    text-align: center;
+  }
+  .blog-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.35;
+    margin: 0 0 0.5rem;
+  }
+  .blog-excerpt {
     color: rgba(43, 43, 43, 0.7);
     font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0 0 0.75rem;
   }
 </style>

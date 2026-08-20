@@ -7,10 +7,42 @@ import { getSiteSettings } from "../lib/pocketbase";
 interface Props {
   title: string;
   description?: string;
+  // Per-page OG/Twitter image override (e.g. a course's own photo). Falls back
+  // to a generic site photo — swap for a real 1200x630 banner when one exists.
+  image?: string;
+  // Set true on thin/boilerplate pages (privacy policy, etc.) that shouldn't
+  // compete for search rankings against real content pages.
+  noindex?: boolean;
 }
 
-const { title, description = "English Mania by KruYam — สอนภาษาอังกฤษตัวต่อตัว" } = Astro.props;
+const {
+  title,
+  description = "English Mania by KruYam — สอนภาษาอังกฤษตัวต่อตัว",
+  image = "/images/classroom.jpg",
+  noindex = false,
+} = Astro.props;
 const settings = await getSiteSettings().catch(() => null);
+
+// Astro.site comes from `site` in astro.config.mjs — needed for every absolute
+// URL below (canonical, OG, JSON-LD `url`). Falls back to Astro.url's own
+// origin so nothing throws if `site` is ever unset (e.g. a future preview env).
+const siteOrigin = Astro.site ?? new URL(Astro.url.origin);
+const canonicalURL = new URL(Astro.url.pathname, siteOrigin);
+const ogImageURL = new URL(image, siteOrigin);
+const pageTitle = `${title} | English Mania`;
+
+// Host-based noindex safeguard (added 2026-08-20, same reasoning as
+// robots.txt.ts): while DNS points a temp `dev.englishmania.co.th` subdomain
+// at the same VM ahead of the real cutover, every page on that host gets
+// forced "noindex, nofollow" regardless of the per-page `noindex` prop —
+// canonical/OG tags above still correctly point at the real production
+// domain either way (siteOrigin comes from astro.config.mjs, not the request
+// host), this only controls whether THIS response tells crawlers to index
+// THIS host.
+const productionHost = siteOrigin.hostname;
+const isProductionHost =
+  Astro.url.hostname === productionHost || Astro.url.hostname === `www.${productionHost}`;
+const robotsContent = !isProductionHost ? "noindex, nofollow" : noindex ? "noindex, follow" : null;
 ---
 
 <!doctype html>
@@ -18,18 +50,66 @@ const settings = await getSiteSettings().catch(() => null);
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{title} | English Mania</title>
+    <title>{pageTitle}</title>
     <meta name="description" content={description} />
-    <link rel="icon" href="/favicon.ico" />
+    {robotsContent && <meta name="robots" content={robotsContent} />}
+    <link rel="canonical" href={canonicalURL} />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#e5402d" />
+
+    <!-- Open Graph (Facebook/LINE link previews) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="English Mania by KruYam" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:url" content={canonicalURL} />
+    <meta property="og:locale" content="th_TH" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageURL} />
+
     <!-- LocalBusiness structured data for SEO -->
     {settings && (
       <script type="application/ld+json" set:html={JSON.stringify({
         "@context": "https://schema.org",
-        "@type": "LocalBusiness",
+        "@type": ["LocalBusiness", "EducationalOrganization"],
+        "@id": `${siteOrigin}#organization`,
         name: settings.company_name_th,
+        url: siteOrigin.toString(),
+        logo: new URL("/images/logo.png", siteOrigin).toString(),
+        image: ogImageURL.toString(),
         telephone: settings.phone,
-        address: settings.address,
-        sameAs: [settings.facebook_url].filter(Boolean),
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: settings.address,
+          addressCountry: "TH",
+        },
+        // Coordinates confirmed against Siraphob's own Google Maps share link
+        // (2026-08-18) — not derived/guessed from the text address.
+        geo: {
+          "@type": "GeoCoordinates",
+          latitude: 13.8791098,
+          longitude: 100.4042499,
+        },
+        // Facebook/LINE come from PocketBase settings (may change without a
+        // code deploy); YouTube/Instagram/TikTok are static brand handles
+        // confirmed 2026-08-18, same pattern the old MakeWebEasy site used.
+        sameAs: [
+          settings.facebook_url,
+          settings.line_oa_url,
+          "https://www.instagram.com/englishmania_official/",
+          "https://www.youtube.com/@EnglishManiaAsia",
+          "https://www.tiktok.com/@englishmaniakruyam",
+        ].filter(Boolean),
+        areaServed: "TH",
       })} />
     )}
   </head>

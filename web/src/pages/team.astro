@@ -5,7 +5,10 @@ import { getTutors } from "../lib/pocketbase";
 const tutors = await getTutors().catch(() => []);
 ---
 
-<BaseLayout title="ทีมติวเตอร์">
+<BaseLayout
+  title="ทีมติวเตอร์"
+  description="ทีมติวเตอร์ English Mania by KruYam คัดสรรจากวุฒิการศึกษาและประสบการณ์สอนจริง พร้อมดูแลนักเรียนทุกระดับชั้น"
+>
   <section class="section hero-text">
     <div class="container">
       <h1 class="hero-heading">ทีมติวเตอร์</h1>

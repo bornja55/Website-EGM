@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://englishmania.co.th/sitemap-index.xml
+Sitemap: https://englishmania.co.th/sitemap-content.xml

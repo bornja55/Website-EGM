@@ -1,38 +1,86 @@
 ---
-export const prerender = false;
+// TEMPORARY preview-only page — NOT part of the real site. Renders the exact
+// same markup/styles as blog/[slug].astro with a hardcoded mock post, now
+// showing the apple.com/support content-module patterns USED INSIDE the
+// article body (Siraphob correction 2026-08-18: patterns apply per-article,
+// not to the /blog index grid). Delete this file once verified.
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import Breadcrumbs from "../../components/Breadcrumbs.astro";
 
-const { slug } = Astro.params;
-const PB_URL = process.env.POCKETBASE_URL || "http://127.0.0.1:8090"; // see note in lib/pocketbase.ts
-const res = await fetch(
-  `${PB_URL}/api/collections/blog_posts/records?filter=${encodeURIComponent(`slug="${slug}"`)}`
-);
-const data = res.ok ? await res.json() : { items: [] };
-const post = data.items[0];
+const post = {
+  title: "สรุปหลักแกรมม่าเบื้องต้น ป.4-6 ที่ต้องรู้ก่อนสอบเข้า ม.1",
+  excerpt: "รวมหลักแกรมม่าที่เจอบ่อยที่สุดในข้อสอบเข้า ม.1 อธิบายง่ายๆ พร้อมตัวอย่างประโยคที่ใช้ได้จริง",
+  cover_image: "/images/services-tutoring.jpg",
+  published_at: "2026-08-10",
+  content: `
+    <p>เด็กๆ ที่เตรียมสอบเข้า ม.1 มักจะเจอโจทย์แกรมม่าซ้ำๆ กันทุกปี บทความนี้สรุปหลักที่ออกสอบบ่อยที่สุด อธิบายแบบเข้าใจง่าย ไม่ต้องท่องจำเยอะ</p>
 
-if (!post) {
-  return Astro.redirect("/blog", 302);
-}
+    <div class="content-split">
+      <div class="content-split-text">
+        <h3>Present Perfect ใช้เมื่อไหร่</h3>
+        <p>โครงสร้าง Subject + have/has + V3 ใช้พูดถึงเหตุการณ์ที่เริ่มในอดีตแต่ยังเกี่ยวข้องกับปัจจุบัน หรือเพิ่งเกิดขึ้นโดยไม่ระบุเวลาชัดเจน เช่น "I have already finished my homework."</p>
+      </div>
+      <div class="content-split-media">
+        <img src="/images/classroom.jpg" alt="นักเรียนกำลังทำแบบฝึกหัดแกรมม่า" />
+      </div>
+    </div>
 
+    <div class="content-split content-split--reverse">
+      <div class="content-split-text">
+        <h3>Present Simple vs Present Continuous</h3>
+        <p>Present Simple ใช้กับสิ่งที่ทำเป็นประจำ ส่วน Present Continuous ใช้กับสิ่งที่กำลังทำอยู่ตอนนี้ — จุดที่เด็กสับสนบ่อยคือกริยาที่แสดงความรู้สึก (like, want, know) ปกติจะไม่ใช้รูป -ing</p>
+      </div>
+      <div class="content-split-media">
+        <img src="/images/services-tutoring.jpg" alt="ครูกำลังสอนไวยากรณ์ภาษาอังกฤษ" />
+      </div>
+    </div>
+
+    <div class="content-explore">
+      <div class="content-explore-item">
+        <div class="content-explore-media">
+          <img src="/images/workshops/insect-pinning-craft.jpg" alt="ตัวอย่างชีทสรุปที่ใช้จริงในคลาสเรียน" />
+        </div>
+        <h4>ชีทสรุปที่ใช้จริงในคลาส</h4>
+        <p>ดาวน์โหลดแบบฝึกหัดเพิ่มเติมได้ที่คอร์สติวสอบเข้า ม.1</p>
+      </div>
+      <div class="content-explore-item">
+        <div class="content-explore-media">
+          <img src="/images/classroom.jpg" alt="บรรยากาศห้องเรียนติวสอบเข้า ม.1" />
+        </div>
+        <h4>บรรยากาศคลายเรียนจริง</h4>
+        <p>คลาสติวสอบเข้า ม.1 กลุ่มเล็ก เน้นตะลุยโจทย์จับเวลา</p>
+      </div>
+    </div>
+
+    <div class="content-highlights">
+      <div class="content-highlights-main">
+        <h3>สรุปประเด็นสำคัญก่อนเข้าห้องสอบ</h3>
+        <p>อ่านทวนหลักแกรมม่าในบทความนี้ให้ครบ แล้วลองทำโจทย์ตัวอย่างซ้ำจนคล่อง ไม่ต้องท่องจำทุกกฎ แค่จำ "สัญญาณคำ" ที่บอกว่าโจทย์ต้องการ tense ไหน เช่น already/yet บอก Present Perfect, now บอก Present Continuous</p>
+      </div>
+      <div class="content-highlights-row">
+        <div class="content-highlights-card">
+          <h3>ข้อควรระวัง</h3>
+          <p>เด็กมักผสม Present Perfect กับ Past Simple สลับกัน เวลามีคำระบุเวลาชัดเจน (yesterday, last week) ต้องใช้ Past Simple เท่านั้น ไม่ใช้ have/has</p>
+        </div>
+        <div class="content-highlights-card content-highlights-card--compact">
+          <span class="content-highlights-icon">💡</span>
+          <h3>เคล็ดลับ</h3>
+          <p>ฝึกแต่งประโยคเองวันละ 2-3 ประโยคต่อ tense</p>
+        </div>
+      </div>
+    </div>
+
+    <p>อยากได้แบบฝึกหัดเพิ่มเติมและตะลุยโจทย์แบบจับเวลาจริง สมัครคอร์สติวสอบเข้า ม.1 กับ English Mania ได้เลย</p>
+  `,
+};
 const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-function thaiDate(iso: string | null | undefined) {
-  if (!iso) return null;
+function thaiDate(iso: string) {
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return null;
   return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
 }
 const publishedLabel = thaiDate(post.published_at);
 ---
 
-<BaseLayout title={post.title} description={post.excerpt || post.title} image={post.cover_image || undefined}>
-  <!-- Same shared "product page" hero as course/promotion/workshop detail
-       pages (global.css) — giant centered headline first, full-bleed photo
-       second, per DESIGN.md/apple.com reference. Keeps บทความ visually one
-       family with the rest of the site instead of its own one-off style. -->
-  <div class="container">
-    <Breadcrumbs items={[{ label: "บทความ", href: "/blog" }, { label: post.title }]} />
-  </div>
+<BaseLayout title={post.title} description={post.excerpt || post.title}>
   <section class="container product-hero-content post-hero">
     <a class="back-link" href="/blog">← บทความทั้งหมด</a>
     <h1 class="product-heading post-heading">{post.title}</h1>
@@ -49,31 +97,6 @@ const publishedLabel = thaiDate(post.published_at);
     </section>
   )}
 
-  <!-- post.content is raw HTML from PocketBase's editor field. Plain prose
-       tags (p/h2/ul/blockquote) render narrow (44rem) for readability. Three
-       extra block classes are available for content authors to drop in —
-       same apple.com/support module patterns as the /blog index grid, but
-       used INSIDE an article's body this time (Siraphob correction,
-       2026-08-18: "ในแต่ละบทความให้ใช้ตามนี้ ไม่ใช่หน้าหลัก"). All three kept
-       here for future articles even when a given post only uses one or two:
-         .content-split [.content-split-text / .content-split-media]
-           — pattern 2, text+photo side-by-side touching (add
-           `.content-split--reverse` to flip which side the photo is on)
-         .content-explore [.content-explore-item > .content-explore-media
-         (img forced to 16:9) + text below]
-           — pattern 1, free-floating photo cards with caption below/
-           outside, ALWAYS 2+ items side by side (never a single lone
-           column — Siraphob correction 2026-08-18: "ห้ามมีรูปเดี่ยว 1
-           คอลัม และรูปแบบนั้นต้องเป็นภาพแนวนอน 16:9 เท่านั้น")
-         .content-highlights [.content-highlights-main +
-         .content-highlights-row > .content-highlights-card (add
-         `--compact` for the narrower/icon one)]
-           — pattern 3, card+text playing with size: one full-width card on
-           top, two unequal-width cards below (e.g. a "สรุปประเด็นสำคัญ" or
-           "ข้อควรระวัง" block partway through an article)
-       All three break out to the full container width, wider than the
-       44rem text column, same as apple.com's own long-form support
-       articles. -->
   <article class="section post-body container">
     <div set:html={post.content} />
   </article>
@@ -88,10 +111,6 @@ const publishedLabel = thaiDate(post.published_at);
 </BaseLayout>
 
 <style>
-  /* `.product-hero-content`/`.product-heading`/`.product-hero-media` come
-     from global.css — shared with course/promotion/workshop pages. Only
-     article-specific bits (back link, published-date pill spacing, prose
-     typography, closing LINE CTA band) live here. */
   .post-hero {
     position: relative;
   }
@@ -109,9 +128,6 @@ const publishedLabel = thaiDate(post.published_at);
     margin-top: 1.5rem;
   }
 
-  /* Outer article stays full container width so content-module blocks can
-     break out wider than the text column; plain prose tags are narrowed
-     individually below instead of on the whole .post-body. */
   .post-body {
     line-height: 1.8;
     font-size: 1.05rem;
@@ -145,12 +161,6 @@ const publishedLabel = thaiDate(post.published_at);
     border-radius: var(--radius);
   }
 
-  /* Pattern 2 — text panel + photo panel side-by-side, fused into ONE
-     single rounded card (Siraphob correction 2026-08-18: "2card ต้อง
-     ติดกันเหมือนเป็น card เดียวกัน" — no gap, no separate rounded corners
-     on each half). The radius/overflow-clip lives on the OUTER
-     .content-split container only; the two inner panels are square-edged
-     so together they read as one continuous shape, not two cards touching. */
   .post-body :global(.content-split) {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -184,15 +194,6 @@ const publishedLabel = thaiDate(post.published_at);
     font-size: 0.98rem;
     line-height: 1.7;
   }
-  /* Photo panel forced to a strict 1:1 square (Siraphob correction
-     2026-08-18: "ขนาดรูปต้องเป็น 1:1 เท่านั้น"), positioned at the top of
-     the row (not stretched) — if the text panel ends up taller, the
-     leftover space below the square photo shows the same neutral-bg tint
-     as the text panel so it still reads as one continuous surface, not a
-     gap. `border-radius: 0` on the img is REQUIRED here — .post-body's
-     blanket `img { border-radius: var(--radius) }` rule would otherwise
-     round this image's corners too and break the fused-card look (bug
-     found in round 3 screenshot: "card รูปมันยังมุมโค้ง"). */
   .post-body :global(.content-split-media) {
     align-self: start;
     aspect-ratio: 1 / 1;
@@ -212,12 +213,6 @@ const publishedLabel = thaiDate(post.published_at);
     }
   }
 
-  /* Pattern 1 — free-floating photo cards, no border/shadow, caption sits
-     plain and centered below/outside each card. Same module as the /blog
-     index grid items. ALWAYS 2+ items in a row (auto-fit, min 280px) and
-     every image forced to a true 16:9 crop via the aspect-ratio wrapper —
-     a single lone image in its own column read as unfinished/ugly, per
-     Siraphob's correction. */
   .post-body :global(.content-explore) {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -254,12 +249,6 @@ const publishedLabel = thaiDate(post.published_at);
     margin: 0 0 0.4rem;
   }
 
-  /* Pattern 3 — card + text playing with size: one full-width card, then
-     two unequal-width cards below it (2fr/1fr, same family gap as
-     .content-split). apple.com/support's "Designing for longevity" +
-     "Beware of counterfeit parts" + "Be aware of gift card scams" trio is
-     the reference. Curated/editorial by nature — author picks what goes in
-     each slot, doesn't loop over arbitrary N items. */
   .post-body :global(.content-highlights) {
     display: flex;
     flex-direction: column;
@@ -293,10 +282,6 @@ const publishedLabel = thaiDate(post.published_at);
     color: rgba(43, 43, 43, 0.75);
     font-size: 0.95rem;
     line-height: 1.7;
-  }
-  .post-body :global(.content-highlights-main p + p),
-  .post-body :global(.content-highlights-card p + p) {
-    margin-top: 0.75rem;
   }
   .post-body :global(.content-highlights-card--compact) {
     display: flex;

@@ -1,0 +1,228 @@
+---
+// TEMPORARY preview-only page — NOT part of the real site. Renders the same
+// markup/styles as blog/index.astro with hardcoded mock posts so the new
+// apple.com/support-style grid can be screenshotted before real blog_posts
+// exist in PocketBase. Delete this file once verified.
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const posts = [
+  {
+    slug: "grammar-p4-6",
+    title: "สรุปหลักแกรมม่าเบื้องต้น ป.4-6 ที่ต้องรู้ก่อนสอบเข้า ม.1",
+    excerpt: "รวมหลักแกรมม่าที่เจอบ่อยที่สุดในข้อสอบเข้า ม.1 อธิบายง่ายๆ พร้อมตัวอย่างประโยคที่ใช้ได้จริง",
+    cover_image: "/images/services-tutoring.jpg",
+    published_at: "2026-08-10",
+  },
+  {
+    slug: "insect-pinning-recap",
+    title: "สรุปกิจกรรม Insect Pinning Workshop รอบล่าสุด",
+    excerpt: "ย้อนดูบรรยากาศเวิร์กช็อปสตาฟแมลงสำหรับเด็ก 7-12 ปี ที่จัดร่วมกับ Wanghin Lab",
+    cover_image: "/images/workshops/insect-pinning-craft.jpg",
+    published_at: "2026-08-01",
+  },
+  {
+    slug: "prepare-m1-ep",
+    title: "เตรียมสอบเข้า ม.1 ห้อง EP ต้องทำอะไรบ้าง",
+    excerpt: "เช็กลิสต์เตรียมตัวสำหรับผู้ปกครองและนักเรียนที่วางแผนสอบเข้าห้อง EP",
+    cover_image: "/images/classroom.jpg",
+    published_at: "2026-07-20",
+  },
+  {
+    slug: "phonics-tips",
+    title: "เคล็ดลับสอน Phonics ให้เด็กเล็กสนุกกับการอ่านออกเสียง",
+    excerpt: "ไอเดียกิจกรรมง่ายๆ ที่ครูใช้จริงในห้องเรียน English Mania",
+    cover_image: "/images/services/format-onsite.jpg",
+    published_at: "2026-07-05",
+  },
+];
+const [featured, ...rest] = posts;
+
+const THAI_MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+function thaiDate(iso: string | null | undefined) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getDate()} ${THAI_MONTHS[d.getMonth()]} ${d.getFullYear() + 543}`;
+}
+---
+
+<BaseLayout title="บทความ" description="ความรู้ เคล็ดลับการเรียน และเรื่องราวจาก English Mania by KruYam">
+  <section class="section hero-text">
+    <div class="container">
+      <h1 class="hero-heading">บทความ</h1>
+      <p class="hero-sub">เคล็ดลับการเรียน อัปเดตคอร์ส และเรื่องราวจากห้องเรียน English Mania</p>
+    </div>
+  </section>
+
+  <section class="section section-neutral">
+    <div class="container">
+      {featured && (
+        <a class="featured-post" href={`/blog/${featured.slug}/`}>
+          <div class="featured-text">
+            {thaiDate(featured.published_at) && <span class="blog-date">{thaiDate(featured.published_at)}</span>}
+            <h2 class="featured-title">{featured.title}</h2>
+            {featured.excerpt && <p class="featured-excerpt">{featured.excerpt}</p>}
+            <span class="blog-readmore">อ่านต่อ →</span>
+          </div>
+          <div class="featured-media">
+            {featured.cover_image ? (
+              <img src={featured.cover_image} alt={featured.title} loading="eager" />
+            ) : (
+              <div class="blog-media-fallback" aria-hidden="true" />
+            )}
+          </div>
+        </a>
+      )}
+
+      {rest.length > 0 && (
+        <div class="blog-grid">
+          {rest.map((p: any) => (
+            <a class="blog-item" href={`/blog/${p.slug}/`}>
+              <div class="blog-media">
+                {p.cover_image ? (
+                  <img src={p.cover_image} alt={p.title} loading="lazy" />
+                ) : (
+                  <div class="blog-media-fallback" aria-hidden="true" />
+                )}
+              </div>
+              <div class="blog-item-text">
+                {thaiDate(p.published_at) && <span class="blog-date">{thaiDate(p.published_at)}</span>}
+                <h3 class="blog-title">{p.title}</h3>
+                {p.excerpt && <p class="blog-excerpt">{p.excerpt}</p>}
+                <span class="blog-readmore">อ่านต่อ →</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .hero-text {
+    text-align: center;
+    padding-bottom: 1.5rem;
+  }
+  .hero-sub {
+    color: rgba(43, 43, 43, 0.7);
+    margin-top: 0.75rem;
+    font-size: 1.1rem;
+  }
+  .blog-date {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--em-red);
+    margin-bottom: 0.5rem;
+  }
+  .blog-readmore {
+    display: inline-block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--em-red);
+  }
+  .blog-media-fallback {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--em-yellow) 0%, var(--em-yellow-dark) 100%);
+  }
+  .featured-post {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    border-radius: var(--radius);
+    overflow: hidden;
+    color: inherit;
+    margin-bottom: 3.5rem;
+  }
+  .featured-post:hover {
+    text-decoration: none;
+  }
+  .featured-text {
+    background: var(--em-white);
+    padding: clamp(2rem, 4vw, 3.5rem);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .featured-title {
+    font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0 0 0.9rem;
+  }
+  .featured-excerpt {
+    color: rgba(43, 43, 43, 0.7);
+    font-size: 1.02rem;
+    line-height: 1.6;
+    margin: 0 0 1.1rem;
+  }
+  .featured-media {
+    align-self: start;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: var(--em-white);
+  }
+  .featured-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+  .featured-post:hover .featured-media img {
+    transform: scale(1.03);
+  }
+  @media (max-width: 720px) {
+    .featured-post {
+      grid-template-columns: 1fr;
+    }
+  }
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 3rem 2.5rem;
+  }
+  .blog-item {
+    display: block;
+    color: inherit;
+    text-align: center;
+  }
+  .blog-item:hover {
+    text-decoration: none;
+  }
+  .blog-media {
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .blog-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s ease;
+  }
+  .blog-item:hover .blog-media img {
+    transform: scale(1.04);
+  }
+  .blog-item-text {
+    padding: 1.25rem 0.5rem 0;
+  }
+  .blog-item-text .blog-date {
+    text-align: center;
+  }
+  .blog-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    line-height: 1.35;
+    margin: 0 0 0.5rem;
+  }
+  .blog-excerpt {
+    color: rgba(43, 43, 43, 0.7);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0 0 0.75rem;
+  }
+</style>

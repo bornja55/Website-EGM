@@ -103,6 +103,11 @@ Cloudflare Turnstile ฟรี ไม่จำกัดจำนวนครั�
 
 ### DevOps
 - **Docker Compose** (สภาพแวดล้อม dev เหมือน prod เป๊ะ)
+- **Caddy** reverse proxy (`Caddyfile`) — คอนเทนเนอร์เดียวที่เปิดพอร์ต 80 จริง ส่งต่อ `/pb/*` เข้า
+  PocketBase (ตัด prefix ก่อนส่ง) และที่เหลือเข้าเว็บ Astro — หน้า admin PocketBase (`/pb/_/`) ยังใช้
+  ผ่าน path นี้ไม่ได้เต็มรูปแบบ (asset path ของตัว PocketBase เองอ้างอิงแบบ root-absolute) ใช้ SSH
+  tunnel แทนสำหรับงานแอดมิน (`ssh -L 8090:127.0.0.1:8090 deploy@<IP>` แล้วเปิด
+  `http://127.0.0.1:8090/_/`)
 - **GitHub Actions** deploy อัตโนมัติทุกครั้งที่ push ขึ้น `main`
 - **GCP Compute Engine `e2-micro`** (Always Free tier — ต้องอยู่ใน `us-west1`/`us-east1`/`us-central1`)
 - **Cloudflare** (DNS + Proxy TLS + Turnstile anti-spam)
@@ -168,7 +173,10 @@ npm run dev
   - รัน migration ใหม่ (`pocketbase/pb_migrations/10_add_badge_field.js`) แล้วรัน
     `node patch-insect-workshop-badge.mjs` เพื่อให้ฟีเจอร์ "คอร์ส/เวิร์กช็อปเด่น" ใช้งานได้ครบ (ดู
     [`HANDOFF.md`](./HANDOFF.md))
-  - จัดเตรียมเครื่อง GCP `e2-micro` จริง
+  - จัดเตรียมเครื่อง GCP `e2-micro` จริง — รัน `./scripts/provision-gcp-vm.sh` (ต้องมี `gcloud` CLI
+    login ไว้ก่อน, ลองแบบไม่ลงมือจริงได้ด้วย `--dry-run`) สคริปต์จะสร้าง VM + firewall (พอร์ต 80
+    เท่านั้น) + SSH key เฉพาะสำหรับ deploy ให้ครบ แล้ว print ค่า `GCP_SSH_HOST`/`GCP_SSH_USER`/
+    `GCP_SSH_KEY` ออกมาให้ก็อปไปกรอกในตารางด้านล่างได้เลย
   - กรอก GitHub Actions secrets ให้ครบ (ดูตารางด้านล่าง)
   - สร้าง Cloudflare Turnstile widget + LINE OA ตัวจริง
   - ย้าย DNS ที่ Cloudflare มาชี้เครื่องใหม่

@@ -2,6 +2,7 @@
 export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ProductTabs from "../../components/ProductTabs.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import {
   getCourse,
   getCourseSections,
@@ -30,9 +31,35 @@ const [sections, pinnedImages, tagMatchedImages, reviews] = await Promise.all([
 // Logic moved to lib/summaryStats.ts when this template was rolled out to
 // promotions and workshops, which need the same row.
 const summaryStats = buildScheduleStats(course);
+
+// Course rich-result eligibility (schema.org/Course) — Google can show
+// provider + price directly in search results for this type.
+const courseSchema = {
+  "@context": "https://schema.org",
+  "@type": "Course",
+  name: course.title,
+  description: course.tagline || course.title,
+  provider: {
+    "@type": "EducationalOrganization",
+    name: "English Mania by KruYam",
+    sameAs: "https://englishmania.co.th",
+  },
+  ...(course.price != null && {
+    offers: {
+      "@type": "Offer",
+      price: course.price,
+      priceCurrency: "THB",
+      availability: "https://schema.org/InStock",
+    },
+  }),
+};
 ---
 
-<BaseLayout title={course.title} description={course.tagline || course.title}>
+<BaseLayout title={course.title} description={course.tagline || course.title} image={course.image}>
+  <script type="application/ld+json" set:html={JSON.stringify(courseSchema)} />
+  <div class="container">
+    <Breadcrumbs items={[{ label: "คอร์สเรียน", href: "/course" }, { label: course.title }]} />
+  </div>
   <section class="container product-hero-content">
     <h1 class="product-heading">{course.title}</h1>
     {course.tagline && <p class="product-tagline">{course.tagline}</p>}

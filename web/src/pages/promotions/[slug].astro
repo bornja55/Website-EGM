@@ -2,6 +2,7 @@
 export const prerender = false;
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import ProductTabs from "../../components/ProductTabs.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
 import {
   getPromotion,
   getCourseSections,
@@ -35,7 +36,10 @@ const [sections, pinnedImages, tagMatchedImages, reviews] = await Promise.all([
 const summaryStats = buildScheduleStats(promotion);
 ---
 
-<BaseLayout title={promotion.title} description={promotion.tagline || promotion.title}>
+<BaseLayout title={promotion.title} description={promotion.tagline || promotion.title} image={promotion.image}>
+  <div class="container">
+    <Breadcrumbs items={[{ label: "โปรโมชั่น", href: "/promotions" }, { label: promotion.title }]} />
+  </div>
   <section class="container product-hero-content">
     <span class="badge">โปรโมชั่น</span>
     <h1 class="product-heading">{promotion.title}</h1>

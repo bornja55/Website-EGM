@@ -7,6 +7,14 @@ services:
     container_name: egm-pb
     restart: unless-stopped
     ports:
+      # Published for SSH-tunnel admin access only (`ssh -L 8090:127.0.0.1:8090
+      # deploy@$GCP_SSH_HOST`, then http://127.0.0.1:8090/_/ locally) — the
+      # GCP firewall (scripts/provision-gcp-vm.sh) only opens port 80, so this
+      # is NOT reachable from the public internet regardless of this mapping.
+      # The `proxy` service below also exposes read/API access publicly under
+      # /pb/* — see Caddyfile's comment for why the ADMIN UI specifically
+      # (/pb/_/) doesn't fully work through that path and still needs this
+      # tunnel.
       - "${PB_PORT:-8090}:8090"
     volumes:
       # Bind mount (not a named Docker volume) — on purpose, so the nightly
@@ -30,8 +38,17 @@ services:
     restart: unless-stopped
     depends_on:
       - pb
-    ports:
-      - "${WEB_PORT:-3000}:4321"
+    # No published host port — the `proxy` service (Caddy, below) is the
+    # only container that binds to the host now, and reaches this one over
+    # the compose network by service name (`web:4321`). For local debugging
+    # without going through the proxy, add a `docker-compose.override.yml`
+    # with your own `ports: ["3000:4321"]` on this service rather than
+    # editing this file — override files aren't committed, so they can't
+    # accidentally reintroduce the port-3000-vs-Cloudflare mismatch this
+    # setup was built to avoid (see the WEB_PORT history in git log if
+    # curious).
+    expose:
+      - "4321"
     environment:
       - POCKETBASE_URL=http://pb:8090
       - PUBLIC_POCKETBASE_URL=${PUBLIC_POCKETBASE_URL:-https://englishmania.co.th/pb}
@@ -46,3 +63,30 @@ services:
       # web container so the API routes can authenticate before writing.
       - SUPERUSER_EMAIL=${SUPERUSER_EMAIL}
       - SUPERUSER_PASS=${SUPERUSER_PASS}
+
+  # Reverse proxy — the ONLY container that binds to the host now (port 80,
+  # matching scripts/provision-gcp-vm.sh's firewall rule and Cloudflare's
+  # Flexible-SSL origin port). Routes /pb/* to PocketBase (path stripped
+  # first — see Caddyfile) and everything else to the Astro app. Added
+  # 2026-08-20 so PUBLIC_POCKETBASE_URL's documented `.../pb` path (README's
+  # secrets table, this file's `web.environment` above) actually resolves to
+  # something — before this, nothing routed that path anywhere.
+  proxy:
+    image: caddy:2-alpine
+    container_name: egm-proxy
+    restart: unless-stopped
+    depends_on:
+      - pb
+      - web
+    ports:
+      - "${WEB_PORT:-80}:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Caddy's own state (its config's `storage` path) — harmless to lose on
+      # a rebuild since `auto_https off` means it never issues certs, but a
+      # named volume keeps `docker compose up -d --build` from re-pulling a
+      # cold image layer for it every deploy.
+      - caddy_data:/data
+
+volumes:
+  caddy_data:

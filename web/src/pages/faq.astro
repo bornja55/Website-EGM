@@ -6,9 +6,32 @@ const [faqs, settings] = await Promise.all([
   getFaq().catch(() => []),
   getSiteSettings().catch(() => null),
 ]);
+
+// FAQPage rich-result eligibility: strip any HTML from the answer (Google
+// wants plain text in `acceptedAnswer.text`) — f.answer is rendered with
+// set:html below because it can contain real markup, so it can't be reused
+// as-is here.
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((f) => ({
+    "@type": "Question",
+    name: f.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: f.answer.replace(/<[^>]+>/g, "").trim(),
+    },
+  })),
+};
 ---
 
-<BaseLayout title="คำถามที่พบบ่อย">
+<BaseLayout
+  title="คำถามที่พบบ่อย"
+  description="รวบรวมคำถามที่พบบ่อยเกี่ยวกับคอร์สเรียน ค่าเรียน ตารางเรียน และการจองคิวที่ English Mania by KruYam"
+>
+  {faqs.length > 0 && (
+    <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+  )}
   <section class="section hero-text">
     <div class="container">
       <h1 class="hero-heading">คำถามที่พบบ่อย</h1>

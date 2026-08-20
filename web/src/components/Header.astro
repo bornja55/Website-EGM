@@ -61,7 +61,11 @@ const NAV_AFTER_MEGA = [
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="/">
-      <img src="/images/logo.png" alt="English Mania by KruYam" height="40" />
+      {/* New logo2.png mark (2026-08-20) is a wide wordmark (~1.91:1), not
+          the old circular 1:1 icon — width is set to match so it doesn't
+          squish; both attributes are real pixel dims of the source crop,
+          scaled to the nav's 40px height, so no layout shift on load. */}
+      <img src="/images/logo.png" alt="English Mania by KruYam" width="76" height="40" />
     </a>
 
     <!-- Desktop nav ------------------------------------------------------ -->
