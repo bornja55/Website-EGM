@@ -236,7 +236,7 @@ set -e
 # docker-compose.yml's bind mounts + scripts/backup-to-drive.sh expect.
 export DEBIAN_FRONTEND=noninteractive
 apt-get update
-apt-get install -y ca-certificates curl gnupg
+apt-get install -y ca-certificates curl gnupg rsync
 install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 chmod a+r /etc/apt/keyrings/docker.gpg
@@ -245,6 +245,15 @@ echo \
   > /etc/apt/sources.list.d/docker.list
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+# rsync is needed by .github/workflows/deploy.yml's "Sync repo to VM" step
+# (rsync over ssh) — NOT installed by default on the Debian 12 cloud image,
+# and Docker's own apt install above doesn't pull it in either. Missing this
+# makes the deploy workflow fail with exit code 12 ("error in rsync protocol
+# data stream") because the remote side has no `rsync` binary for the local
+# rsync client to talk to — added here alongside the ca-certificates/curl/
+# gnupg install above so it lands on every FRESH VM this script provisions.
+# NOTE: this only runs on first boot of a NEW VM — an already-provisioned VM
+# needs `sudo apt-get install -y rsync` run by hand once (see deploy runbook).
 
 mkdir -p /data/englishmania/pb_data /opt/englishmania
 
