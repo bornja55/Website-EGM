@@ -5,6 +5,7 @@
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Node](https://img.shields.io/badge/Node.js-%3E%3D22.12-339933?style=for-the-badge&logo=node.js&logoColor=white)
 ![Status](https://img.shields.io/badge/status-pre--launch-yellow?style=for-the-badge)
+![Staging](https://img.shields.io/badge/staging-live-brightgreen?style=for-the-badge)
 
 เว็บไซต์ตัวใหม่ของสถาบัน **English Mania by KruYam** สร้างขึ้นมาแทนที่ระบบเช่าแพลตฟอร์มเดิมที่กำลังจะหมดอายุ
 ด้วยสถาปัตยกรรมเบา ๆ ที่รันได้บนเครื่องเดียว ทั้งหน้าเว็บ (Astro) และระบบจัดการเนื้อหา (PocketBase) โฮสต์เอง
@@ -15,6 +16,14 @@
 
 ## 📢 อัปเดตล่าสุด (Recent Updates)
 
+- **เว็บขึ้นสถานะจริงแล้วบน staging (Staging Site Is Live):** ก่อนหน้านี้เว็บยังไม่ขึ้นเลยแม้จะ deploy ผ่านทุกครั้ง
+  วันนี้ไล่แก้จนขึ้นจริงที่ `dev.englishmania.co.th` ครบทั้ง 3 จุด — (1) หน้าแอดมิน PocketBase (`/pb/_/`)
+  เข้าไม่ได้เพราะตอน deploy ไม่เคยสร้างบัญชีแอดมินให้เลยสักครั้ง ตอนนี้แก้ให้สร้าง/อัปเดตบัญชีอัตโนมัติทุกครั้งที่
+  deploy แล้ว, (2) เว็บขึ้น error 522 ตลอดเพราะโหมดเข้ารหัสของ Cloudflare (SSL/TLS) ตั้งไว้ไม่ตรงกับที่เครื่อง VM
+  เปิดพอร์ตจริง แก้โหมดให้ตรงกันแล้วเว็บขึ้นทันที, (3) เว็บขึ้นแล้วแต่ไม่มีคอร์ส/โปรโมชั่น/เวิร์กช็อปให้เห็นเลย
+  เพราะข้อมูลจริงไม่เคยถูกย้ายขึ้นเครื่อง VM มาก่อน ตอนนี้ย้ายข้อมูลจริงขึ้นไปแล้ว หน้าเว็บโชว์คอร์สและโปรโมชั่น
+  ครบเหมือนที่ทดสอบบนเครื่อง local ทุกอย่าง
+  สถานะปัจจุบัน: **staging ใช้งานได้จริงแล้ว (Live)** — เหลือแค่ย้าย DNS โดเมนหลักมาชี้เครื่องนี้ก่อน launch จริง
 - **หน้า "บริการ" จัดวางใหม่ทั้งหน้า (Services Page Redesign):** เมื่อก่อนหน้าบริการเป็นการ์ดเรียงเดียวกันหมด
   ดูตันไม่มีจุดเด่น ตอนนี้แบ่งเป็น 4 โซนชัดเจน — รายวิชา/รูปแบบการเรียนจัดเป็นตารางการ์ดใหญ่-เล็กตามความสำคัญ,
   เวิร์กช็อปแยกเป็นการ์ดเดี่ยวเห็นชื่อคอร์สชัด, ติวสอบ/ชั้นปีเปลี่ยนเป็นสไลด์เลื่อนแบบเดียวกับหน้าแรกของ Apple.com
@@ -169,17 +178,16 @@ npm run dev
 
 - ✅ **DONE** — Scaffold โครงสร้าง Astro + PocketBase + Docker + CI/CD (2026-08-08)
 - ✅ **DONE** — ดีไซน์ครบ 8 หน้า, build ผ่านจริงเป็นครั้งแรก, push ขึ้น GitHub (2026-08-09)
+- ✅ **DONE** — จัดเตรียมเครื่อง GCP `e2-micro` จริง + กรอก GitHub Actions secrets ครบ + staging
+  (`dev.englishmania.co.th`) ใช้งานได้จริงพร้อมข้อมูลคอร์ส/โปรโมชั่นจริง (2026-08-21)
 - 🚧 **IN PROGRESS** — Pre-launch checklist:
   - รัน migration ใหม่ (`pocketbase/pb_migrations/10_add_badge_field.js`) แล้วรัน
     `node patch-insect-workshop-badge.mjs` เพื่อให้ฟีเจอร์ "คอร์ส/เวิร์กช็อปเด่น" ใช้งานได้ครบ (ดู
     [`HANDOFF.md`](./HANDOFF.md))
-  - จัดเตรียมเครื่อง GCP `e2-micro` จริง — รัน `./scripts/provision-gcp-vm.sh` (ต้องมี `gcloud` CLI
-    login ไว้ก่อน, ลองแบบไม่ลงมือจริงได้ด้วย `--dry-run`) สคริปต์จะสร้าง VM + firewall (พอร์ต 80
-    เท่านั้น) + SSH key เฉพาะสำหรับ deploy ให้ครบ แล้ว print ค่า `GCP_SSH_HOST`/`GCP_SSH_USER`/
-    `GCP_SSH_KEY` ออกมาให้ก็อปไปกรอกในตารางด้านล่างได้เลย
-  - กรอก GitHub Actions secrets ให้ครบ (ดูตารางด้านล่าง)
   - สร้าง Cloudflare Turnstile widget + LINE OA ตัวจริง
-  - ย้าย DNS ที่ Cloudflare มาชี้เครื่องใหม่
+  - ย้าย DNS ของโดเมนหลัก (`englishmania.co.th`) ที่ Cloudflare มาชี้เครื่องใหม่ — ตอนนี้ใช้งานได้แค่
+    โดเมนย่อย staging เท่านั้น (💡 ก่อนย้าย ต้องเช็คโหมด SSL/TLS ของโดเมนหลักเองอีกรอบ อย่าอิงจากโดเมน
+    staging เพราะแต่ละโดเมนตั้งค่าคนละชุดได้)
   - ทดสอบสคริปต์ backup กับ PocketBase ตัวจริงบนเครื่อง VM
 - 📋 **PLANNED** — ทนายตรวจ `privacy.astro` ให้ตรง PDPA แบบเป๊ะ ๆ ก่อน launch, อัปเดตเนื้อหาเกี่ยวกับเรา/คอร์สเรียนที่ค้างมา ~1 ปี
 - 🎯 **เป้าหมาย**: ย้ายออกจากระบบเดิมให้เสร็จก่อน **2026-11-08** (วันที่แผนฟรีของระบบเดิมหมดอายุ)
@@ -220,6 +228,28 @@ npm run dev
 ---
 
 ## 🛠️ Troubleshooting
+
+### เข้าหน้าแอดมิน PocketBase (`/pb/_/`) บนเครื่อง VM ไม่ได้หลัง deploy ครั้งแรก
+**Status:** แก้ถาวรแล้ว (2026-08-21)
+**Impact:** เว็บหน้าบ้านใช้งานได้ปกติทุกอย่าง แต่ล็อกอินหน้าจัดการเนื้อหาไม่ได้เลยสักครั้ง
+**What broke:** ขั้นตอน deploy รันแค่ `docker compose up` ซึ่งไม่เคยสร้างบัญชีแอดมิน (superuser) ให้ PocketBase
+เลย — ต้องรันคำสั่งสร้างบัญชีแยกต่างหากซึ่งไม่มีใครรันมาก่อน
+**Workaround:** ไม่ต้องทำอะไรแล้ว — เพิ่มขั้นตอนสร้าง/อัปเดตบัญชีแอดมินอัตโนมัติเข้าไปใน
+[`.github/workflows/deploy.yml`](./.github/workflows/deploy.yml) ทุกครั้งที่ deploy แล้ว ถ้ายังเจอปัญหานี้อีก
+รันคำสั่งนี้บนเครื่อง VM ได้เลย (ใช้ค่าจาก secrets `SUPERUSER_EMAIL`/`SUPERUSER_PASS`):
+```bash
+docker compose exec -T pb sh -c '/pb/pocketbase superuser upsert "$SUPERUSER_EMAIL" "$SUPERUSER_PASS"'
+```
+
+### เว็บขึ้น Cloudflare Error 522 "Connection timed out"
+**Status:** แก้ถาวรแล้ว (2026-08-21)
+**Impact:** เข้าเว็บไม่ได้เลยทั้งเว็บ ทั้งที่เช็คแล้วเครื่อง VM รันปกติ (คอนเทนเนอร์ healthy, CPU/memory ว่าง)
+**What broke:** โหมดเข้ารหัส (SSL/TLS mode) ของ Cloudflare ตั้งไว้เป็น "Full" ซึ่งคาดหวังว่าเครื่อง VM ต้องเปิด
+พอร์ต 443 (HTTPS) ไว้รับด้วย แต่เครื่อง VM เปิดแค่พอร์ต 80 (HTTP) เพราะ Cloudflare เป็นคนเข้ารหัส HTTPS ให้อยู่
+แล้ว — ยืนยันด้วยการดัก packet บนเครื่อง VM (`tcpdump`) พบว่า Cloudflare ไม่เคยส่ง request เข้าพอร์ต 80 เลยสักครั้ง
+**Workaround:** เปลี่ยนโหมดที่ Cloudflare Dashboard → **SSL/TLS → Overview** จาก "Full" เป็น **"Flexible"**
+(ให้ Cloudflare คุย HTTP ธรรมดากับเครื่อง VM แล้วค่อยห่อ HTTPS ให้ผู้ใช้เอง) — เว็บขึ้นทันทีหลังเปลี่ยน
+ไม่ต้อง restart อะไรบนเครื่อง VM เพิ่ม
 
 ### `npm run build` ค้าง หรือ error "native binding"
 **Status:** ทราบสาเหตุแล้ว
