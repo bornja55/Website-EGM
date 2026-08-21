@@ -82,6 +82,27 @@ jobs:
           # docker compose reads ./.env in the project directory automatically —
           # no need to pass these as inline shell vars.
 
+      - name: Ensure PocketBase superuser exists
+        env:
+          GCP_SSH_USER: ${{ secrets.GCP_SSH_USER }}
+          GCP_SSH_HOST: ${{ secrets.GCP_SSH_HOST }}
+        run: |
+          # `docker compose up` never creates PocketBase's initial superuser —
+          # only `pocketbase superuser upsert` does, and nothing ran that
+          # automatically before this step existed. Found + fixed manually on
+          # 2026-08-21 (site was up, but nobody could log into /pb/_/ at all)
+          # — see project memory project_englishmania_gcp_deploy.md. upsert
+          # creates-or-updates, so running it every deploy is safe and
+          # idempotent. SUPERUSER_EMAIL/SUPERUSER_PASS are already env vars
+          # inside the pb container (set by docker-compose.yml from .env), so
+          # no secret needs to cross SSH a second time here — the inner
+          # \"\$SUPERUSER_EMAIL\" is deliberately escaped so it's expanded by
+          # the container's own shell, not the VM's or this runner's.
+          ssh -i ~/.ssh/deploy_key "$GCP_SSH_USER@$GCP_SSH_HOST" '
+            cd /opt/englishmania &&
+            docker compose exec -T pb sh -c "/pb/pocketbase superuser upsert \"\$SUPERUSER_EMAIL\" \"\$SUPERUSER_PASS\""
+          '
+
 # Required repo secrets (Settings -> Secrets and variables -> Actions):
 #   GCP_SSH_HOST, GCP_SSH_USER, GCP_SSH_KEY, SUPERUSER_EMAIL, SUPERUSER_PASS,
 #   PUBLIC_POCKETBASE_URL, GOOGLE_SHEETS_ID, GOOGLE_SERVICE_ACCOUNT_JSON,
