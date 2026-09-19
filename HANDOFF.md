@@ -1,10 +1,20 @@
 # Handoff: homepage layout, detail-page carousels, catalog bento grid, search+filter, quick-view popup
 
 ## Status
-Everything below is code-complete and verified live against `localhost:4321` via the Chrome MCP.
-Nothing from this session is committed yet — Siraphob is about to push. One PocketBase migration
-(the new `badge` field) has been written but **not yet applied** on his machine, confirmed by a
-live read of the PocketBase REST API — see "Context the next agent needs".
+**UPDATE 2026-09-19 — re-verified live at https://dev.englishmania.co.th (Chrome MCP):** every
+item below is confirmed live on the public dev site, not just localhost. Migration 10 (`badge`
+field) **has since been applied** — the live PocketBase API now returns `badge`, and the Insect
+Pinning Workshop shows its "แนะนำ" badge as a 2:1 featured tile on `/workshops` and `/services`.
+Search+filter, the quick-view iframe popup, and the gallery/reviews carousels on a detail page
+were all clicked through live and work as described. Nothing outstanding from this doc remains —
+treat "Context the next agent needs" below as historical, except the still-open items carried
+forward into `HANDOFF-services-page-redesign.md`'s update.
+
+Everything below is code-complete and was originally verified live against `localhost:4321` via
+the Chrome MCP. Nothing from this session was committed yet as of first writing — Siraphob was
+about to push. One PocketBase migration (the new `badge` field) had been written but was **not
+yet applied** at that time, confirmed by a live read of the PocketBase REST API — see "Context the
+next agent needs" (now resolved, see update above).
 
 ## Goal
 Iteratively restyle the English Mania by KruYam site (Astro + PocketBase) toward an Apple.com

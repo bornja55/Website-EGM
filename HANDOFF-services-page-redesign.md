@@ -2,7 +2,46 @@
 
 ## Status
 
-All 4 sections of `/services` have been rebuilt to Siraphob's literal layout spec and verified live via Chrome MCP against `http://localhost:4321/services`. As of this handoff, every open request has been implemented and confirmed — there is no known outstanding bug. Treat this as a stable checkpoint, not a "resume mid-task" state.
+**UPDATE 2026-09-19 — re-verified live at https://dev.englishmania.co.th/services (Chrome MCP):**
+all 4 sections still match this spec exactly — Section 1's 66/33 grid, Section 2's stacked
+half-height workshop cards, Section 3's dual-row sync-track carousel (different tile sizes per
+row, centered pill nav, autoplay looping through all dots), and Section 4's uniform-height 3x2
+grid. Two items NOT covered by this doc were found live and are still open:
+
+1. ~~Every "จองผ่าน LINE" button site-wide links to a placeholder.~~ **FIXED (code+script ready,
+   not yet applied live) 2026-09-19:** Siraphob's real LINE OA link is `https://lin.ee/pnahe9i`
+   (LINE ID `@english_mania.th` — he gave the ID first, then corrected it to this actual short link
+   the same day: "ฉันส่งให้ผิด"). Updated the 3 hardcoded blog-page instances
+   (`web/src/pages/blog/[slug].astro`, `_preview.astro`, `_previewtemp.astro`) directly in code to
+   `https://lin.ee/pnahe9i`. Every other button reads `settings.line_oa_url` / each record's own
+   `line_link` from PocketBase — sandbox has no live PocketBase write access, so wrote
+   `pocketbase/patch-line-oa-links.mjs` (idempotent, same pattern as `patch-insect-workshop-badge.mjs`)
+   to update `site_settings.line_oa_url` plus every `courses`/`workshops`/`promotions` record still
+   on the placeholder, to `https://lin.ee/pnahe9i`. **Siraphob needs to run this script** (see its
+   header for the exact PowerShell steps), then reload and click a few LINE buttons to confirm.
+2. **Section 4 (อื่นๆ)'s icon-on-flat-tint fallback renders as a single raw Thai character**, not
+   an icon — e.g. `.tile-fallback.other-fallback` shows literally "จ" for "จำหน่ายเอกสารและหนังสือ
+   ติวสอบ" and "เ" for "เช่า Co-Working Space / ห้องประชุม" (first character of the label, all 7
+   tiles affected). **Confirmed by Siraphob 2026-09-19: this is expected — the real images/icons
+   for this section just haven't been made yet.** Not a bug; leave the fallback as-is until he
+   supplies the artwork (fits his page-by-page image touch-up pass, not a code fix).
+
+**Also corrected 2026-09-19 (from Siraphob, not code-side findings):** the site's on-file address
+had the wrong house number/soi (scraped 2026-08-11 from the old site's own /contact page, never
+cross-checked against Maps). Real address is `61/578 บางใหญ่ซิตี้ซอย 8, ตำบลเสาธงหิน, อำเภอบางใหญ่,
+นนทบุรี 11140`, confirmed against a fresher Google Maps share link
+(https://maps.app.goo.gl/m3oHomg381jPQorRA) that resolves to the same Place ID as the one already
+on file — same business, more precise pin. Updated in code: `pocketbase/seed.mjs` (REAL_ADDRESS,
+for future reseeds), `web/src/pages/index.astro` (GOOGLE_MAPS_URL/MAP_LAT/MAP_LNG), and
+`web/src/layouts/BaseLayout.astro` (LocalBusiness geo schema). Live PocketBase `site_settings.address`
+still needs the same fix — wrote `pocketbase/patch-address.mjs` for Siraphob to run (same
+no-write-access reason as the LINE patch above).
+
+All 4 sections have been rebuilt to Siraphob's literal layout spec and were originally verified
+live via Chrome MCP against `http://localhost:4321/services`. As of first writing, every open
+request had been implemented and confirmed — there was no known outstanding bug from this doc's
+own scope. Treat this as a stable checkpoint, not a "resume mid-task" state; the two items above
+are new findings from live re-verification, not regressions in this doc's own work.
 
 ## Goal
 

@@ -42,15 +42,22 @@ async function main() {
   const token = await authAdmin();
 
   console.log("Seeding site_settings...");
-  // Address/email confirmed 2026-08-11 directly from the old live site's
-  // /contact page (https://ballevrtgab.makeweb.co/contact) via browser —
-  // NOT the same address as an earlier (wrong) guess: it's เขตบางใหญ่, not
-  // บางบัวทอง.
-  const REAL_ADDRESS = "62/35 ถนนบางใหญ่ซิตี้ ซอย 9, ตำบลเสาธงหิน, เขตบางใหญ่, นนทบุรี 11140";
+  // Address/email originally scraped 2026-08-11 from the old live site's
+  // /contact page (https://ballevrtgab.makeweb.co/contact) — NOT the same
+  // address as an even earlier (wrong) guess: it's เขตบางใหญ่, not บางบัวทอง.
+  //
+  // CORRECTED 2026-09-19 — Siraphob gave the real address directly (the
+  // 2026-08-11 scrape had the wrong house number/soi). Verified against his
+  // Google Maps share link (https://maps.app.goo.gl/m3oHomg381jPQorRA), which
+  // resolves to the same Place ID as the original 2026-08-18 share link
+  // (0x30e28f28749cb20f:0x15d61fc70cfafcc6 — "English Mania by KruYam"), just
+  // a more precise pin. See also index.astro's GOOGLE_MAPS_URL/MAP_LAT/MAP_LNG
+  // and BaseLayout.astro's geo schema, updated the same way.
+  const REAL_ADDRESS = "61/578 บางใหญ่ซิตี้ซอย 8, ตำบลเสาธงหิน, อำเภอบางใหญ่, นนทบุรี 11140";
   await create(token, "site_settings", {
     phone: "098 579 5693",
     email: "englishmaniabkk@gmail.com",
-    line_oa_url: "https://lin.ee/REPLACE_WITH_SANDBOX_OA",
+    line_oa_url: "https://lin.ee/pnahe9i",
     address: REAL_ADDRESS,
     hours: "เปิดทุกวัน",
     company_name_th: "บริษัท อิงลิช เมเนีย จำกัด",
@@ -92,7 +99,7 @@ async function main() {
     title: "เรียนภาษาอังกฤษ Online ตัวต่อตัว 4 ชั่วโมงเต็ม",
     description: "990 บาท จำนวนจำกัด เรียนผ่าน Google Meet ครั้งละ 1 ชม. สัปดาห์ละ 1 วัน",
     price: 990,
-    line_link: "https://lin.ee/REPLACE_WITH_SANDBOX_OA",
+    line_link: "https://lin.ee/pnahe9i",
     is_active: true,
   });
 
@@ -111,7 +118,7 @@ async function main() {
   for (const c of courses) {
     await create(token, "promotions", {
       ...c,
-      line_link: "https://lin.ee/REPLACE_WITH_SANDBOX_OA",
+      line_link: "https://lin.ee/pnahe9i",
       is_active: true,
     });
   }
@@ -133,7 +140,7 @@ async function main() {
     seats_total: 10,
     event_date: "2026-08-22",
     is_active: true,
-    line_link: "https://lin.ee/REPLACE_WITH_SANDBOX_OA",
+    line_link: "https://lin.ee/pnahe9i",
     // Real photo from the 25 July 2026 Insect Pinning Workshop, business's
     // own Facebook photo export — a real pinned specimen next to the
     // student's own painted-wing craft, not a stock/placeholder image.
@@ -237,7 +244,7 @@ async function main() {
     sort_order: 1,
   });
 
-  console.log("Done. Remember: replace REPLACE_WITH_SANDBOX_OA with the real sandbox LINE OA link before testing the booking flow.");
+  console.log("Done. Seeded with the real LINE OA link (lin.ee/pnahe9i) and address.");
 }
 
 main().catch((e) => {

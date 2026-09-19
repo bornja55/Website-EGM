@@ -92,12 +92,14 @@ const robotsContent = !isProductionHost ? "noindex, nofollow" : noindex ? "noind
           streetAddress: settings.address,
           addressCountry: "TH",
         },
-        // Coordinates confirmed against Siraphob's own Google Maps share link
-        // (2026-08-18) — not derived/guessed from the text address.
+        // Coordinates confirmed against Siraphob's own Google Maps share link,
+        // most recently updated 2026-09-19 with a more precise pin (same
+        // Place ID as the original 2026-08-18 link — see index.astro's
+        // GOOGLE_MAPS_URL comment) — not derived/guessed from the text address.
         geo: {
           "@type": "GeoCoordinates",
-          latitude: 13.8791098,
-          longitude: 100.4042499,
+          latitude: 13.8819899,
+          longitude: 100.4055284,
         },
         // Facebook/LINE come from PocketBase settings (may change without a
         // code deploy); YouTube/Instagram/TikTok are static brand handles

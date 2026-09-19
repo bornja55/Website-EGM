@@ -35,13 +35,17 @@ const displayTutors = featuredTutors.length > 0 ? featuredTutors : tutors.slice(
 
 // Confirmed 2026-08-18 by Siraphob: Google Maps listing (5.0 ★ / 44 reviews,
 // screenshot) + old site (ballevrtgab.makeweb.co, opened 2012/2013 per two
-// slightly different sources — "13+" is safe under either). Coordinates are
-// from the Maps share link he sent, used for both the embed and (later) any
-// geo schema — do not re-derive these from the text address, there isn't a
-// full street address on file anywhere in the project yet.
-const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/rRxUoHtnhnBhbWwF7";
-const MAP_LAT = 13.8791098;
-const MAP_LNG = 100.4042499;
+// slightly different sources — "13+" is safe under either).
+//
+// Coordinates UPDATED 2026-09-19 — Siraphob sent a fresher Maps share link
+// (https://maps.app.goo.gl/m3oHomg381jPQorRA) with a more precise pin.
+// Confirmed same Place ID as the 2026-08-18 link
+// (0x30e28f28749cb20f:0x15d61fc70cfafcc6 — "English Mania by KruYam"), so
+// this is a precision correction, not a different location. A full street
+// address is now on file too — see REAL_ADDRESS in pocketbase/seed.mjs.
+const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/m3oHomg381jPQorRA";
+const MAP_LAT = 13.8819899;
+const MAP_LNG = 100.4055284;
 
 // "คอร์สแนะนำ" — promotions + courses + workshops together, 3 columns x 2
 // rows (Siraphob: the separate promo banner + a 2-column course grid read as
@@ -335,10 +339,13 @@ const otherServices: CatalogItem[] = [
   )}
 
   {/* แผนที่และการเดินทาง — coordinates are from the Google Maps share link
-      Siraphob sent (2026-08-18), embedded with the same key-less
+      Siraphob sent, most recently updated 2026-09-19 with a more precise pin
+      (same Place ID, see comment above), embedded with the same key-less
       `?q=<lat>,<lng>&output=embed` pattern already established in
-      `pocketbase/seed.mjs` for the address field. No street address on file
-      yet, so this uses coordinates rather than a text query. */}
+      `pocketbase/seed.mjs` for the address field. A full street address is
+      now on file (pocketbase/seed.mjs REAL_ADDRESS) but this section keeps
+      using coordinates, which pin the exact location more reliably than a
+      text-address Maps query. */}
   <section class="section section-neutral">
     <div class="container-wide">
       <div class="section-header">

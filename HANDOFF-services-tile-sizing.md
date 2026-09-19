@@ -1,7 +1,17 @@
 # Handoff: /services page — tile sizing model is wrong, needs full rebuild
 
 ## Status
-**Broken / not yet fixed.** The current `/services` page (all 6 category rows: รายวิชา,
+**RESOLVED — superseded by `HANDOFF-services-page-redesign.md`, confirmed live 2026-09-19.**
+Re-checked `/services` Section 3 (ติวสอบ & ชั้นปี) live at https://dev.englishmania.co.th/services
+via Chrome MCP: it now uses uniform-width tiles with the container clipping the edge tiles
+(a true peek, center tile fully visible) — exactly the model this doc's "What's next" called for,
+not the old proportional-resize bug described below. Row heights are consistent between the
+ติวสอบ (fewer, larger tiles) and ชั้นปี (more, smaller tiles) rows. Treat everything below as
+historical context only — do not resume work from this doc's "How to resume" section; the
+current source of truth for Section 3 is `HANDOFF-services-page-redesign.md`.
+
+**Broken / not yet fixed** (as of this doc's original writing — since fixed, see update above).
+ The current `/services` page (all 6 category rows: รายวิชา,
 รูปแบบ, เวิร์กช็อป, ติวสอบ, ชั้นปี, อื่นๆ) uses a sizing model that Siraphob has explicitly said
 is wrong across every section. No code has been changed yet in response to the correction —
 the previous session spent its remaining time re-examining apple.com references and got
