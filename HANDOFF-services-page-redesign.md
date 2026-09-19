@@ -8,17 +8,15 @@ half-height workshop cards, Section 3's dual-row sync-track carousel (different 
 row, centered pill nav, autoplay looping through all dots), and Section 4's uniform-height 3x2
 grid. Two items NOT covered by this doc were found live and are still open:
 
-1. ~~Every "จองผ่าน LINE" button site-wide links to a placeholder.~~ **FIXED (code+script ready,
-   not yet applied live) 2026-09-19:** Siraphob's real LINE OA link is `https://lin.ee/pnahe9i`
-   (LINE ID `@english_mania.th` — he gave the ID first, then corrected it to this actual short link
-   the same day: "ฉันส่งให้ผิด"). Updated the 3 hardcoded blog-page instances
-   (`web/src/pages/blog/[slug].astro`, `_preview.astro`, `_previewtemp.astro`) directly in code to
-   `https://lin.ee/pnahe9i`. Every other button reads `settings.line_oa_url` / each record's own
-   `line_link` from PocketBase — sandbox has no live PocketBase write access, so wrote
-   `pocketbase/patch-line-oa-links.mjs` (idempotent, same pattern as `patch-insect-workshop-badge.mjs`)
-   to update `site_settings.line_oa_url` plus every `courses`/`workshops`/`promotions` record still
-   on the placeholder, to `https://lin.ee/pnahe9i`. **Siraphob needs to run this script** (see its
-   header for the exact PowerShell steps), then reload and click a few LINE buttons to confirm.
+1. ~~Every "จองผ่าน LINE" button site-wide links to a placeholder.~~ **FIXED and CONFIRMED LIVE
+   2026-09-19:** real LINE OA link is `https://lin.ee/pnahe9i` (LINE ID `@english_mania.th`).
+   Updated the 3 hardcoded blog-page instances (`web/src/pages/blog/[slug].astro`, `_preview.astro`,
+   `_previewtemp.astro`) directly in code. Every other button reads `settings.line_oa_url` / each
+   record's own `line_link` from PocketBase — `pocketbase/patch-line-oa-links.mjs` was run by
+   Siraphob via `docker exec` on the VM (`egm-web` container → PocketBase at `http://pb:8090`),
+   updating `site_settings.line_oa_url` plus every `courses`/`workshops`/`promotions` record that
+   was still on the placeholder. Verified live on dev.englishmania.co.th — LINE buttons now open
+   `lin.ee/pnahe9i`.
 2. **Section 4 (อื่นๆ)'s icon-on-flat-tint fallback renders as a single raw Thai character**, not
    an icon — e.g. `.tile-fallback.other-fallback` shows literally "จ" for "จำหน่ายเอกสารและหนังสือ
    ติวสอบ" and "เ" for "เช่า Co-Working Space / ห้องประชุม" (first character of the label, all 7
@@ -33,9 +31,24 @@ cross-checked against Maps). Real address is `61/578 บางใหญ่ซิ
 (https://maps.app.goo.gl/m3oHomg381jPQorRA) that resolves to the same Place ID as the one already
 on file — same business, more precise pin. Updated in code: `pocketbase/seed.mjs` (REAL_ADDRESS,
 for future reseeds), `web/src/pages/index.astro` (GOOGLE_MAPS_URL/MAP_LAT/MAP_LNG), and
-`web/src/layouts/BaseLayout.astro` (LocalBusiness geo schema). Live PocketBase `site_settings.address`
-still needs the same fix — wrote `pocketbase/patch-address.mjs` for Siraphob to run (same
-no-write-access reason as the LINE patch above).
+`web/src/layouts/BaseLayout.astro` (LocalBusiness geo schema). Live PocketBase `site_settings.address` was updated the same way — `pocketbase/patch-address.mjs`
+run via `docker exec` on the VM — and confirmed live on `/contact` and the homepage map.
+
+**Follow-up, same day — ตำบล text vs. Google's own auto-filled locality:** Siraphob's real, VERIFIED
+Google Business Profile listing ("You manage this Business Profile" panel) auto-shows the locality
+as **บางรักพัฒนา**, not เสาธงหิน. Briefly "corrected" the address text to match — Siraphob then said
+directly that Google's own locality/boundary data is wrong here ("เหมือนใน google มันจะผิด") and the
+real, registered ตำบล is เสาธงหิน. **Resolved per Siraphob's explicit decision:** keep the
+*displayed address text* as เสาธงหิน (the real, registered one), but make the *map itself* not
+depend on that text at all — `google_maps_embed_url` (both `seed.mjs` and `patch-address.mjs`) now
+builds from the verified lat/lng directly (`?q=13.8819899,100.4055284&output=embed`, same Place ID
+`0x30e28f28749cb20f:0x15d61fc70cfafcc6`) instead of a free-text `?q=<address>` search. So the map
+always lands on the correct real-world pin regardless of which ตำบล name Google's own UI happens to
+show for that spot, and the page text stays accurate to Siraphob's actual registration. Final state:
+`address` = `...ตำบลเสาธงหิน...`, `google_maps_embed_url` = lat/lng-based, unaffected by the ตำบล
+debate. `pocketbase/patch-address.mjs` was updated accordingly — **needs to be re-run on the VM**
+(`docker exec -e PB_URL=http://pb:8090 -i egm-web node - < pocketbase/patch-address.mjs`) once this
+commit is deployed, then re-check `/contact` and the homepage map.
 
 All 4 sections have been rebuilt to Siraphob's literal layout spec and were originally verified
 live via Chrome MCP against `http://localhost:4321/services`. As of first writing, every open

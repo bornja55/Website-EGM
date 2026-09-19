@@ -53,7 +53,21 @@ async function main() {
   // (0x30e28f28749cb20f:0x15d61fc70cfafcc6 — "English Mania by KruYam"), just
   // a more precise pin. See also index.astro's GOOGLE_MAPS_URL/MAP_LAT/MAP_LNG
   // and BaseLayout.astro's geo schema, updated the same way.
+  //
+  // Briefly "corrected" the ตำบล to บางรักพัฒนา same day, based on the
+  // locality Google auto-filled on Siraphob's own Business Profile listing —
+  // Siraphob then confirmed directly that Google's own data is wrong here and
+  // the real, registered ตำบล is เสาธงหิน after all ("เหมือนใน google มันจะผิด").
+  // Trust Siraphob's direct statement over any Google-auto-filled locality
+  // field for this address going forward.
+  //
+  // Embed URL: also switched from the key-less `?q=<lat>,<lng>&output=embed`
+  // form to Google Maps' own official "Share > Embed a map" iframe src for
+  // this exact Place ID — Siraphob said the `?q=` form rendered wrong; this
+  // is what Google itself generates for this listing.
   const REAL_ADDRESS = "61/578 บางใหญ่ซิตี้ซอย 8, ตำบลเสาธงหิน, อำเภอบางใหญ่, นนทบุรี 11140";
+  const REAL_MAP_EMBED_URL =
+    "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4175.883763437158!2d100.4055284!3d13.8819899!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e28f28749cb20f%3A0x15d61fc70cfafcc6!2sEnglish%20Mania%20by%20KruYam!5e1!3m2!1sen!2sth!4v1789803994730!5m2!1sen!2sth";
   await create(token, "site_settings", {
     phone: "098 579 5693",
     email: "englishmaniabkk@gmail.com",
@@ -63,9 +77,9 @@ async function main() {
     company_name_th: "บริษัท อิงลิช เมเนีย จำกัด",
     company_registration_no: "0125568032059",
     facebook_url: "https://www.facebook.com/englishmaniaofficial",
-    // Basic Maps embed by address text — no API key needed. Swap for a
-    // pinned place-ID embed later if the address ever proves ambiguous.
-    google_maps_embed_url: "https://www.google.com/maps?q=" + encodeURIComponent(REAL_ADDRESS) + "&output=embed",
+    // Pinned to the verified lat/lng (same Place ID as GOOGLE_MAPS_URL below)
+    // — no API key needed, and immune to future address-text edits.
+    google_maps_embed_url: REAL_MAP_EMBED_URL,
   });
 
   console.log("Seeding services (real subject catalog from old site's footer menu)...");

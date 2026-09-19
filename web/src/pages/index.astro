@@ -46,6 +46,10 @@ const displayTutors = featuredTutors.length > 0 ? featuredTutors : tutors.slice(
 const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/m3oHomg381jPQorRA";
 const MAP_LAT = 13.8819899;
 const MAP_LNG = 100.4055284;
+// Google Maps' own official embed iframe src for this Place ID — see the map
+// section comment below for why this replaced the old `?q=<lat>,<lng>` form.
+const GOOGLE_MAPS_EMBED_URL =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4175.883763437158!2d100.4055284!3d13.8819899!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e28f28749cb20f%3A0x15d61fc70cfafcc6!2sEnglish%20Mania%20by%20KruYam!5e1!3m2!1sen!2sth!4v1789803994730!5m2!1sen!2sth";
 
 // "คอร์สแนะนำ" — promotions + courses + workshops together, 3 columns x 2
 // rows (Siraphob: the separate promo banner + a 2-column course grid read as
@@ -338,14 +342,15 @@ const otherServices: CatalogItem[] = [
     </section>
   )}
 
-  {/* แผนที่และการเดินทาง — coordinates are from the Google Maps share link
-      Siraphob sent, most recently updated 2026-09-19 with a more precise pin
-      (same Place ID, see comment above), embedded with the same key-less
-      `?q=<lat>,<lng>&output=embed` pattern already established in
-      `pocketbase/seed.mjs` for the address field. A full street address is
-      now on file (pocketbase/seed.mjs REAL_ADDRESS) but this section keeps
-      using coordinates, which pin the exact location more reliably than a
-      text-address Maps query. */}
+  {/* แผนที่และการเดินทาง — 2026-09-19: switched from the key-less
+      `?q=<lat>,<lng>&output=embed` pattern to Google Maps' own official
+      "Share > Embed a map" iframe src (Siraphob pasted it directly from
+      Google Maps for this exact listing) — the `?q=` form rendered wrong for
+      him, this `/maps/embed?pb=...` form is what Google itself generates for
+      this Place ID (0x30e28f28749cb20f:0x15d61fc70cfafcc6 — "English Mania by
+      KruYam") and is the one to trust going forward. MAP_LAT/MAP_LNG are kept
+      for GOOGLE_MAPS_URL's directions link and BaseLayout.astro's geo schema,
+      which are unaffected by this. */}
   <section class="section section-neutral">
     <div class="container-wide">
       <div class="section-header">
@@ -354,9 +359,13 @@ const otherServices: CatalogItem[] = [
       </div>
       <div class="map-embed">
         <iframe
-          src={`https://www.google.com/maps?q=${MAP_LAT},${MAP_LNG}&output=embed`}
+          src={GOOGLE_MAPS_EMBED_URL}
+          width="600"
+          height="450"
+          style="border:0;"
+          allowfullscreen
           loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
+          referrerpolicy="strict-origin-when-cross-origin"
           title="แผนที่ English Mania by KruYam"
         ></iframe>
       </div>

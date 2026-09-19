@@ -1,14 +1,21 @@
 // One-off, IDEMPOTENT patch — corrects site_settings.address to the real
-// street address Siraphob gave directly (2026-09-19). The address seeded on
-// 2026-08-11 was scraped from the old site's /contact page and had the wrong
-// house number/soi (61/578 ซอย 8, not 62/35 ซอย 9) — same general area
-// (ตำบลเสาธงหิน, บางใหญ่, นนทบุรี 11140), same Google Maps Place ID
-// (0x30e28f28749cb20f:0x15d61fc70cfafcc6 — "English Mania by KruYam"),
-// confirmed against his fresher Maps share link
-// (https://maps.app.goo.gl/m3oHomg381jPQorRA).
+// street address, Google Maps Place ID 0x30e28f28749cb20f:0x15d61fc70cfafcc6
+// ("English Mania by KruYam"). Fixed the house number/soi 2026-09-19 vs. what
+// was seeded 2026-08-11 (scraped from the old site, never cross-checked):
+// 61/578 ซอย 8, not 62/35 ซอย 9.
 //
-// Also regenerates google_maps_embed_url from the corrected address, same
-// key-less `?q=<address>&output=embed` pattern seed.mjs already uses.
+// ตำบล note (2026-09-19, same day): briefly "corrected" to บางรักพัฒนา based
+// on the locality Google auto-filled on Siraphob's own Business Profile
+// listing, then reverted — Siraphob confirmed directly that Google's own
+// locality/boundary data is wrong for this address ("เหมือนใน google มันจะผิด")
+// and the real, registered ตำบล is เสาธงหิน. Trust his direct statement over
+// any Google-auto-filled field here.
+//
+// Embed URL: Google Maps' own official "Share > Embed a map" iframe src for
+// this exact Place ID (Siraphob pasted it directly from Google Maps) — an
+// earlier version of this script built the embed from `?q=<lat>,<lng>`
+// instead, which Siraphob said rendered wrong; this `/maps/embed?pb=...`
+// form is what Google itself generates for this listing, so use it verbatim.
 //
 // Safe to re-run: does nothing once address already matches NEW_ADDRESS.
 //
@@ -21,7 +28,8 @@ const EMAIL = process.env.SUPERUSER_EMAIL;
 const PASS = process.env.SUPERUSER_PASS;
 
 const NEW_ADDRESS = "61/578 บางใหญ่ซิตี้ซอย 8, ตำบลเสาธงหิน, อำเภอบางใหญ่, นนทบุรี 11140";
-const NEW_EMBED_URL = "https://www.google.com/maps?q=" + encodeURIComponent(NEW_ADDRESS) + "&output=embed";
+const NEW_EMBED_URL =
+  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d4175.883763437158!2d100.4055284!3d13.8819899!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x30e28f28749cb20f%3A0x15d61fc70cfafcc6!2sEnglish%20Mania%20by%20KruYam!5e1!3m2!1sen!2sth!4v1789803994730!5m2!1sen!2sth";
 
 async function authAdmin() {
   const res = await fetch(`${PB_URL}/api/collections/_superusers/auth-with-password`, {
