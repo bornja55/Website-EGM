@@ -6,7 +6,8 @@
 all 4 sections still match this spec exactly — Section 1's 66/33 grid, Section 2's stacked
 half-height workshop cards, Section 3's dual-row sync-track carousel (different tile sizes per
 row, centered pill nav, autoplay looping through all dots), and Section 4's uniform-height 3x2
-grid. Two items NOT covered by this doc were found live and are still open:
+grid. Two items NOT covered by this doc were found live during that re-check (both now closed
+out — see below):
 
 1. ~~Every "จองผ่าน LINE" button site-wide links to a placeholder.~~ **FIXED and CONFIRMED LIVE
    2026-09-19:** real LINE OA link is `https://lin.ee/pnahe9i` (LINE ID `@english_mania.th`).
@@ -34,21 +35,34 @@ for future reseeds), `web/src/pages/index.astro` (GOOGLE_MAPS_URL/MAP_LAT/MAP_LN
 `web/src/layouts/BaseLayout.astro` (LocalBusiness geo schema). Live PocketBase `site_settings.address` was updated the same way — `pocketbase/patch-address.mjs`
 run via `docker exec` on the VM — and confirmed live on `/contact` and the homepage map.
 
-**Follow-up, same day — ตำบล text vs. Google's own auto-filled locality:** Siraphob's real, VERIFIED
-Google Business Profile listing ("You manage this Business Profile" panel) auto-shows the locality
-as **บางรักพัฒนา**, not เสาธงหิน. Briefly "corrected" the address text to match — Siraphob then said
-directly that Google's own locality/boundary data is wrong here ("เหมือนใน google มันจะผิด") and the
-real, registered ตำบล is เสาธงหิน. **Resolved per Siraphob's explicit decision:** keep the
-*displayed address text* as เสาธงหิน (the real, registered one), but make the *map itself* not
-depend on that text at all — `google_maps_embed_url` (both `seed.mjs` and `patch-address.mjs`) now
-builds from the verified lat/lng directly (`?q=13.8819899,100.4055284&output=embed`, same Place ID
-`0x30e28f28749cb20f:0x15d61fc70cfafcc6`) instead of a free-text `?q=<address>` search. So the map
-always lands on the correct real-world pin regardless of which ตำบล name Google's own UI happens to
-show for that spot, and the page text stays accurate to Siraphob's actual registration. Final state:
-`address` = `...ตำบลเสาธงหิน...`, `google_maps_embed_url` = lat/lng-based, unaffected by the ตำบล
-debate. `pocketbase/patch-address.mjs` was updated accordingly — **needs to be re-run on the VM**
-(`docker exec -e PB_URL=http://pb:8090 -i egm-web node - < pocketbase/patch-address.mjs`) once this
-commit is deployed, then re-check `/contact` and the homepage map.
+**Follow-up, same day — ตำบล text vs. Google's own auto-filled locality — RESOLVED, CONFIRMED LIVE:**
+Siraphob's real, VERIFIED Google Business Profile listing ("You manage this Business Profile" panel)
+auto-shows the locality as **บางรักพัฒนา**, not เสาธงหิน. Briefly "corrected" the address text to
+match — Siraphob then said directly that Google's own locality/boundary data is wrong here
+("เหมือนใน google มันจะผิด") and the real, registered ตำบล is เสาธงหิน. **Resolved per Siraphob's
+explicit decision:** keep the *displayed address text* as เสาธงหิน (the real, registered one), but
+make the *map itself* not depend on that text at all.
+
+The map embed itself went through two more iterations before landing: first tried
+`?q=<lat>,<lng>&output=embed` — Siraphob reported this "rendered wrong" — then switched to Google
+Maps' own official "Share > Embed a map" iframe `src` for this exact Place ID
+(`0x30e28f28749cb20f:0x15d61fc70cfafcc6` — "English Mania by KruYam"), which Siraphob pasted
+directly from Google Maps and confirmed correct via a local `test-map.html` test file before
+deploying. `google_maps_embed_url` (`seed.mjs`, `patch-address.mjs`, and `index.astro`'s homepage
+map, now via a `GOOGLE_MAPS_EMBED_URL` const) all use this official embed URL verbatim — it's tied
+to the Place ID, not to any address text, so it can never again drift out of sync with a future
+ตำบล/address edit.
+
+Also found and fixed a real bug in `pocketbase/patch-address.mjs` while deploying this: its
+idempotency guard only checked whether `address` matched, so once that field was already correct
+from the earlier run, it silently skipped updating `google_maps_embed_url` too (printed "nothing to
+do" while the embed URL was still stale). Fixed to check `address` and `google_maps_embed_url`
+independently and patch only whichever one differs.
+
+**Final state, verified live via the PocketBase API
+(`https://dev.englishmania.co.th/pb/api/collections/site_settings/records`):** `address` =
+`...ตำบลเสาธงหิน...`, `google_maps_embed_url` = the official Google embed URL above. Both confirmed
+correct on production as of 2026-09-19 — nothing further to run.
 
 All 4 sections have been rebuilt to Siraphob's literal layout spec and were originally verified
 live via Chrome MCP against `http://localhost:4321/services`. As of first writing, every open
