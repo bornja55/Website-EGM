@@ -17,7 +17,10 @@
 // instead, which Siraphob said rendered wrong; this `/maps/embed?pb=...`
 // form is what Google itself generates for this listing, so use it verbatim.
 //
-// Safe to re-run: does nothing once address already matches NEW_ADDRESS.
+// Safe to re-run: does nothing once BOTH address and google_maps_embed_url
+// already match NEW_ADDRESS/NEW_EMBED_URL (checked independently, so an
+// embed-URL-only change — like the one that added this comment — still
+// applies even when the address text was already correct from an earlier run).
 //
 // Usage: from the `pocketbase` directory —
 //   Get-Content .credentials | Where-Object { $_ -match '=' -and $_ -notmatch '^#' } | ForEach-Object { $k,$v = $_ -split '=',2; Set-Item "Env:$k" $v }
@@ -58,18 +61,34 @@ async function main() {
     process.exit(1);
   }
 
-  if (settings.address === NEW_ADDRESS) {
-    console.log(`(address already "${NEW_ADDRESS}", nothing to do)`);
+  const addressChanged = settings.address !== NEW_ADDRESS;
+  const embedChanged = settings.google_maps_embed_url !== NEW_EMBED_URL;
+
+  if (!addressChanged && !embedChanged) {
+    console.log("(address and google_maps_embed_url already up to date, nothing to do)");
     return;
   }
 
-  console.log(`Old address: "${settings.address}"`);
-  console.log(`New address: "${NEW_ADDRESS}"`);
+  const patch = {};
+  if (addressChanged) {
+    console.log(`Old address: "${settings.address}"`);
+    console.log(`New address: "${NEW_ADDRESS}"`);
+    patch.address = NEW_ADDRESS;
+  } else {
+    console.log("(address already correct, leaving as-is)");
+  }
+  if (embedChanged) {
+    console.log(`Old google_maps_embed_url: "${settings.google_maps_embed_url}"`);
+    console.log(`New google_maps_embed_url: "${NEW_EMBED_URL}"`);
+    patch.google_maps_embed_url = NEW_EMBED_URL;
+  } else {
+    console.log("(google_maps_embed_url already correct, leaving as-is)");
+  }
 
   const res = await fetch(`${PB_URL}/api/collections/site_settings/records/${settings.id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: token },
-    body: JSON.stringify({ address: NEW_ADDRESS, google_maps_embed_url: NEW_EMBED_URL }),
+    body: JSON.stringify(patch),
   });
   if (!res.ok) throw new Error(`patch failed: ${res.status} ${await res.text()}`);
 
